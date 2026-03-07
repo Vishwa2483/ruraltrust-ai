@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>RuralTrust AI - Offline</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 480px;
+            padding: 40px;
+        }
+
+        .icon {
+            font-size: 80px;
+            margin-bottom: 24px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #f1f5f9;
+        }
+
+        p {
+            font-size: 14px;
+            color: #94a3b8;
+            line-height: 1.7;
+            margin-bottom: 32px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            margin: 6px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+
+        .divider {
+            margin: 24px 0;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #475569;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="icon">🌐</div>
+        <div class="badge">● No Connection</div>
+        <h1>Can't Reach Server</h1>
+        <p>RuralTrust AI needs an internet connection to load. Please check your network and try again.</p>
+        <div>
+            <button class="btn" onclick="location.reload()">🔄 Try Again</button>
+            <button class="btn btn-secondary"
+                onclick="window.electronAPI && window.open('https://ruraltrust-ai.vercel.app')">🌐 Open in
+                Browser</button>
+        </div>
+        <div class="divider"></div>
+        <div class="hint">Make sure you have an active internet connection</div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Environment variables (NEVER commit these)
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Build outputs
+dist/
+dist-electron/
+build/
+*.exe
+*.msi
+*.dmg
+*.zip
+
+.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# Uploads (local only)
+backend/uploads/
+
+# Cache
+.cache/
+.parcel-cache/

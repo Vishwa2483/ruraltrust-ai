@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: ruraltrust-ai-backend
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRY_CITIZEN
+        value: 24h
+      - key: JWT_EXPIRY_GOVERNMENT
+        value: 24h
+      - key: JWT_EXPIRY_ADMIN
+        value: 24h
+      - key: OTP_EXPIRY_MINUTES
+        value: 5
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+    healthCheckPath: /api/health

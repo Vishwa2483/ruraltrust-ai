@@ -1,0 +1,50 @@
+{
+  "name": "ruraltrust-backend",
+  "version": "1.0.0",
+  "description": "Backend for RuralTrust AI - Intelligent Rural Complaint Management System",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "nodemon --exec ts-node src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "keywords": [
+    "rural",
+    "complaints",
+    "nlp",
+    "ai",
+    "governance"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^20.10.6",
+    "@types/qrcode": "^1.5.6",
+    "@types/regression": "^2.0.6",
+    "@xenova/transformers": "^2.17.2",
+    "axios": "^1.13.4",
+    "bcrypt": "^6.0.0",
+    "compromise": "^14.14.5",
+    "compromise-numbers": "^1.4.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.0.3",
+    "multer": "^2.0.2",
+    "natural": "^8.1.0",
+    "nodemon": "^3.0.2",
+    "qrcode": "^1.5.4",
+    "regression": "^2.0.1",
+    "sentiment": "^5.0.2",
+    "sharp": "^0.34.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

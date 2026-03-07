@@ -1,0 +1,48 @@
+﻿node.exe : > NOTE: 
+The Vercel CLI now 
+collects telemetry 
+regarding usage of 
+the CLI.
+At C:\Users\vishwa\App
+Data\Roaming\npm\verce
+l.ps1:24 char:5
++     & "node$exe"  "$
+basedir/node_modules/v
+ercel/dist/vc.js" 
+$args
++     ~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (> NOTE: Th   
+ e Ver...age of th    
+e CLI.:String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+> This information is 
+used to shape the CLI 
+roadmap and 
+prioritize features.
+> You can learn more, 
+including how to 
+opt-out if you'd not 
+like to participate 
+in this program, by 
+visiting the 
+following URL:
+> https://vercel.com/d
+ocs/cli/about-telemetr
+y
+Error: No existing 
+credentials found. 
+Please run `vercel 
+login` or pass 
+"--token"
+Learn More: https://er
+r.sh/vercel/no-credent
+ials-found
