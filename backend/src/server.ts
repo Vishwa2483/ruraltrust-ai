@@ -68,7 +68,7 @@ app.get('/api/import-data', async (req, res) => {
         }
 
         const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-        const collections = await mongoose.connection.db.collections();
+        const collections = await mongoose.connection.db!.collections();
         for (let collection of collections) {
             await collection.deleteMany({});
         }
@@ -78,14 +78,14 @@ app.get('/api/import-data', async (req, res) => {
             if (arr.length > 0) {
                 // Ensure _id fields are instantiated properly if needed, but Mongoose bypasses standard Driver formatting often.
                 // It's safer to avoid casting strings to ObjectIds unless the schema strictly enforces it, but the driver handles some.
-                const collection = mongoose.connection.db.collection(colName);
+                const collection = mongoose.connection.db!.collection(colName);
                 await collection.insertMany(arr as any[]);
             }
         }
 
         const bcrypt = require('bcrypt');
         const hashedPassword = await bcrypt.hash('AdminTrust@2026', 10);
-        await mongoose.connection.db.collection('users').updateOne(
+        await mongoose.connection.db!.collection('users').updateOne(
             { type: 'admin' },
             { $set: { password: hashedPassword, username: 'admin' } }
         );
