@@ -58,6 +58,43 @@ const healthHandler = (req: express.Request, res: express.Response) => {
 app.get('/health', healthHandler);
 app.get('/api/health', healthHandler);
 
+// One-time fix: convert user string _ids to ObjectId, re-link complaint citizenIds
+app.get('/api/fix-users', async (req, res) => {
+    try {
+        const db = mongoose.connection.db!;
+        // Step 1: Fix users
+        const users = await db.collection('users').find({}).toArray();
+        const idMap: Record<string, mongoose.Types.ObjectId> = {};
+        let usersFixed = 0;
+        for (const u of users) {
+            if (typeof u._id === 'string') {
+                const oldId = u._id as string;
+                const newId = new mongoose.Types.ObjectId(oldId);
+                idMap[oldId] = newId;
+                const newDoc = { ...u, _id: newId };
+                await db.collection('users').deleteOne({ _id: oldId as any });
+                await db.collection('users').insertOne(newDoc);
+                usersFixed++;
+            } else {
+                idMap[u._id.toString()] = u._id;
+            }
+        }
+        // Step 2: Re-link citizenId in complaints
+        const complaints = await db.collection('complaints').find({}).toArray();
+        let complaintsFixed = 0;
+        for (const c of complaints) {
+            const cid = c.citizenId;
+            if (!cid) continue;
+            const cidStr = typeof cid === 'string' ? cid : cid.toString();
+            const newCid = idMap[cidStr];
+            if (newCid && typeof cid !== 'object') {
+                await db.collection('complaints').updateOne({ _id: c._id }, { $set: { citizenId: newCid } });
+                complaintsFixed++;
+            }
+        }
+        res.json({ done: true, usersFixed, complaintsFixed });
+    } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 
 // Root endpoint
 app.get('/', (req, res) => {
