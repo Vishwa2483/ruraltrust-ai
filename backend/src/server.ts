@@ -58,6 +58,34 @@ const healthHandler = (req: express.Request, res: express.Response) => {
 app.get('/health', healthHandler);
 app.get('/api/health', healthHandler);
 
+// Debug: Check data types in Atlas
+app.get('/api/debug-data', async (req, res) => {
+    try {
+        const db = mongoose.connection.db!;
+        const sampleComplaint = await db.collection('complaints').findOne({});
+        const sampleUser = await db.collection('users').findOne({});
+
+        const getTypes = (obj: any) => {
+            const types: any = {};
+            if (!obj) return 'null';
+            for (const key in obj) {
+                types[key] = {
+                    type: typeof obj[key],
+                    isDate: obj[key] instanceof Date,
+                    value: obj[key]
+                };
+            }
+            return types;
+        };
+
+        res.json({
+            complaint: getTypes(sampleComplaint),
+            user: getTypes(sampleUser)
+        });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
 
 // Root endpoint
 app.get('/', (req, res) => {
