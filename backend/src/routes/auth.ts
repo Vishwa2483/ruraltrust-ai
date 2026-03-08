@@ -201,8 +201,8 @@ router.post('/government/login', async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'Username and password are required' });
         }
 
-        // Find government user
-        const govUser = await User.findOne({ username, type: 'government' });
+        // Find government user or admin
+        const govUser = await User.findOne({ username, type: { $in: ['government', 'admin'] } });
         if (!govUser) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
