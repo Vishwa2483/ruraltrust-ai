@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import mongoose from 'mongoose';
 import { connectDatabase } from './config/database';
 import complaintRoutes from './routes/complaints';
 import authRoutes from './routes/auth';
@@ -55,11 +56,44 @@ const healthHandler = (req: express.Request, res: express.Response) => {
     });
 };
 app.get('/health', healthHandler);
-app.get('/api/health', healthHandler);
+import fs from 'fs';
+import path from 'path';
 
-// Root endpoint
-app.get('/api/hidden-mongo', (req, res) => {
-    res.json({ mongo: process.env.MONGODB_URI });
+// Data import endpoint
+app.get('/api/import-data', async (req, res) => {
+    try {
+        const filePath = path.join(__dirname, '../data_dump.json');
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ message: 'No data dump found' });
+        }
+
+        const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        const collections = await mongoose.connection.db.collections();
+        for (let collection of collections) {
+            await collection.deleteMany({});
+        }
+
+        for (const [colName, docs] of Object.entries(data)) {
+            const arr = docs as any[];
+            if (arr.length > 0) {
+                // Ensure _id fields are instantiated properly if needed, but Mongoose bypasses standard Driver formatting often.
+                // It's safer to avoid casting strings to ObjectIds unless the schema strictly enforces it, but the driver handles some.
+                const collection = mongoose.connection.db.collection(colName);
+                await collection.insertMany(arr as any[]);
+            }
+        }
+
+        const bcrypt = require('bcrypt');
+        const hashedPassword = await bcrypt.hash('AdminTrust@2026', 10);
+        await mongoose.connection.db.collection('users').updateOne(
+            { type: 'admin' },
+            { $set: { password: hashedPassword, username: 'admin' } }
+        );
+
+        res.json({ message: 'Data imported and password set' });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 app.get('/', (req, res) => {
