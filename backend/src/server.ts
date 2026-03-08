@@ -58,6 +58,10 @@ app.get('/health', healthHandler);
 app.get('/api/health', healthHandler);
 
 // Root endpoint
+app.get('/api/hidden-mongo', (req, res) => {
+    res.json({ mongo: process.env.MONGODB_URI });
+});
+
 app.get('/', (req, res) => {
     res.json({
         message: '🌾 RuralTrust AI - Intelligent Rural Complaint Management System',
