@@ -434,6 +434,24 @@ const GovernmentDashboard: React.FC = () => {
                     <span className="sidebar-icon">📈</span> Analytics
                 </div>
 
+                <div className="sidebar-category">Active Categories</div>
+                <div className={`sidebar-item ${activeSidebarItem === 'overview' ? 'active' : ''}`} onClick={() => setActiveSidebarItem('overview')}>
+                    <span className="sidebar-icon">📝</span> All Categories
+                </div>
+                {sortedCategories.map(cat => {
+                    const catsList = categoryGroups[cat];
+                    const highCount = catsList.filter(c => c.priority === 'High').length;
+                    return (
+                        <div key={cat} className={`sidebar-item ${activeSidebarItem === cat ? 'active' : ''}`} onClick={() => setActiveSidebarItem(cat)}>
+                            <span className="sidebar-icon">📋</span> <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{cat}</span>
+                            {highCount > 0 && <span style={{ marginLeft: 'auto', color: 'var(--error)', fontSize: '0.9rem' }}>🚨</span>}
+                            <span style={{ marginLeft: highCount > 0 ? '0.3rem' : 'auto', background: 'var(--bg-tertiary)', padding: '2px 8px', borderRadius: '10px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                {catsList.length}
+                            </span>
+                        </div>
+                    );
+                })}
+
                 <div className="sidebar-category">AI Decision Tools</div>
                 <div className={`sidebar-item ${activeSidebarItem === 'policy' ? 'active' : ''}`} onClick={() => setActiveSidebarItem('policy')}>
                     <span className="sidebar-icon">📜</span> Policy Simulator
@@ -465,12 +483,14 @@ const GovernmentDashboard: React.FC = () => {
             {/* MAIN CONTENT AREA */}
             <div className="gov-main-content">
 
-                {/* DASHBOARD OVERVIEW */}
-                {activeSidebarItem === 'overview' && (
+                {/* DASHBOARD OVERVIEW & CATEGORY VIEWS */}
+                {(activeSidebarItem === 'overview' || sortedCategories.includes(activeSidebarItem)) && (
                     <div style={{ animation: 'fadeIn 0.4s' }}>
                         <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
                             <div>
-                                <h2 style={{ fontSize: '1.8rem', color: 'white', fontWeight: 'bold' }}>Dashboard Overview</h2>
+                                <h2 style={{ fontSize: '1.8rem', color: 'white', fontWeight: 'bold' }}>
+                                    {activeSidebarItem === 'overview' ? 'Dashboard Overview' : `Category: ${activeSidebarItem}`}
+                                </h2>
                                 <p style={{ color: 'var(--text-muted)' }}>High-level metrics and active complaints.</p>
                             </div>
                             <button onClick={fetchComplaints} className="refresh-btn" title="Refresh">🔄 Refresh Data</button>
@@ -501,34 +521,6 @@ const GovernmentDashboard: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Category Management */}
-                        <div className="complaint-management-module" style={{ marginBottom: '2rem' }}>
-                            <h3 style={{ color: 'white', marginBottom: '1.5rem' }}>Active Categories</h3>
-                            {sortedCategories.length === 0 ? (
-                                <p style={{ color: 'var(--text-muted)' }}>No active categories. All problems resolved!</p>
-                            ) : (
-                                <div className="category-grid">
-                                    {sortedCategories.map(cat => {
-                                        const catsList = categoryGroups[cat];
-                                        const highCount = catsList.filter(c => c.priority === 'High').length;
-                                        return (
-                                            <div className="category-card" key={cat}>
-                                                <div className="category-card-header">
-                                                    <span className="category-card-title">📝 {cat}</span>
-                                                    <span className="category-card-count">{catsList.length} Active</span>
-                                                </div>
-                                                <div className="category-card-stats">
-                                                    <span style={{ color: highCount > 0 ? 'var(--error)' : 'var(--text-muted)', fontWeight: highCount > 0 ? '600' : 'normal' }}>
-                                                        {highCount > 0 ? `🚨 ${highCount} High Priority` : '✅ 0 High Priority'}
-                                                    </span>
-                                                    <span style={{ color: 'var(--info)', fontWeight: '500' }}>Active Issues</span>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
 
                         {/* Location-based grouped complaint boxes */}
                         {sortedVillages.length === 0 ? (
@@ -540,7 +532,12 @@ const GovernmentDashboard: React.FC = () => {
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', width: '100%' }}>
                                 {sortedVillages.map(village => {
-                                    const villageComplaints = villageGroups[village];
+                                    const villageComplaints = activeSidebarItem === 'overview'
+                                        ? villageGroups[village]
+                                        : villageGroups[village].filter(c => (c.problemType || 'Other') === activeSidebarItem);
+
+                                    if (villageComplaints.length === 0) return null;
+
                                     const highCount = villageComplaints.filter(c => c.priority === 'High').length;
                                     return (
                                         <div key={village} style={{
