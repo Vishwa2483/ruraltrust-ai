@@ -58,30 +58,44 @@ const healthHandler = (req: express.Request, res: express.Response) => {
 app.get('/health', healthHandler);
 app.get('/api/health', healthHandler);
 
-// Debug: Check data types in Atlas
-app.get('/api/debug-data', async (req, res) => {
+// One-time fix: convert string dates to Date objects
+app.get('/api/fix-dates', async (req, res) => {
     try {
         const db = mongoose.connection.db!;
-        const sampleComplaint = await db.collection('complaints').findOne({});
-        const sampleUser = await db.collection('users').findOne({});
+        const collections = ['complaints', 'users'];
+        const dateFields = ['createdAt', 'updatedAt', 'resolvedAt', 'rejectedAt', 'lastLogin', 'citizenFeedbackAt'];
+        let totalFixed = 0;
 
-        const getTypes = (obj: any) => {
-            const types: any = {};
-            if (!obj) return 'null';
-            for (const key in obj) {
-                types[key] = {
-                    type: typeof obj[key],
-                    isDate: obj[key] instanceof Date,
-                    value: obj[key]
-                };
+        for (const colName of collections) {
+            const cursor = db.collection(colName).find({});
+            while (await cursor.hasNext()) {
+                const doc = await cursor.next();
+                if (!doc) continue;
+
+                const updates: any = {};
+                let hasUpdates = false;
+
+                for (const field of dateFields) {
+                    if (doc[field] && typeof doc[field] === 'string') {
+                        const date = new Date(doc[field]);
+                        if (!isNaN(date.getTime())) {
+                            updates[field] = date;
+                            hasUpdates = true;
+                        }
+                    } else if (doc[field] && doc[field].$date) {
+                        updates[field] = new Date(doc[field].$date);
+                        hasUpdates = true;
+                    }
+                }
+
+                if (hasUpdates) {
+                    await db.collection(colName).updateOne({ _id: doc._id }, { $set: updates });
+                    totalFixed++;
+                }
             }
-            return types;
-        };
+        }
 
-        res.json({
-            complaint: getTypes(sampleComplaint),
-            user: getTypes(sampleUser)
-        });
+        res.json({ done: true, totalFixed });
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
