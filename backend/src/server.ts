@@ -57,23 +57,6 @@ const healthHandler = (req: express.Request, res: express.Response) => {
 app.get('/health', healthHandler);
 app.get('/api/health', healthHandler);
 
-// Emergency admin reset (temporary - remove after use)
-app.get('/api/reset-admin-v2', async (req, res) => {
-    try {
-        const bcrypt = require('bcrypt');
-        const newHash = await bcrypt.hash('AdminTrust@2026', 10);
-        const result = await User.findOneAndUpdate(
-            { type: 'admin' },
-            { $set: { password: newHash, username: 'admin', status: 'active' } },
-            { upsert: true, new: true }
-        );
-        if (!result?.password) return res.status(500).json({ error: 'No result' });
-        const verify = await bcrypt.compare('AdminTrust@2026', result.password);
-        res.json({ done: true, username: result.username, hashPrefix: result.password.substring(0, 7), verifyOk: verify });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
-    }
-});
 
 // Root endpoint
 app.get('/', (req, res) => {

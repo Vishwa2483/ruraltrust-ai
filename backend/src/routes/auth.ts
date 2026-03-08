@@ -222,9 +222,8 @@ router.post('/government/login', async (req: Request, res: Response) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // Update last login
-        govUser.lastLogin = new Date();
-        await govUser.save();
+        // Update last login (use updateOne to avoid validation errors on legacy docs)
+        await User.updateOne({ _id: govUser._id }, { $set: { lastLogin: new Date() } });
 
         // Generate JWT
         const token = generateJWT(govUser);
@@ -339,9 +338,8 @@ router.post('/admin/login', async (req: Request, res: Response) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // Update last login
-        admin.lastLogin = new Date();
-        await admin.save();
+        // Update last login (use updateOne to avoid validation errors on legacy docs)
+        await User.updateOne({ _id: admin._id }, { $set: { lastLogin: new Date() } });
 
         // Generate JWT
         const token = generateJWT(admin);
