@@ -50,10 +50,14 @@ export default defineConfig({
                 // Network first for API calls
                 runtimeCaching: [
                     {
-                        urlPattern: /^https:\/\/ruraltrust-ai-backend\.onrender\.com\/api\/.*/i,
-                        handler: 'NetworkOnly',
+                        urlPattern: /^https:\/\/ruraltrust-backend\.onrender\.com\/api\/.*/i,
+                        handler: 'NetworkFirst',
                         options: {
                             cacheName: 'api-cache',
+                            expiration: {
+                                maxEntries: 100,
+                                maxAgeSeconds: 60 * 60 * 24 * 7 // 1 week
+                            }
                         },
                     },
                 ],
