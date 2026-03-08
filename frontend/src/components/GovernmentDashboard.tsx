@@ -524,13 +524,13 @@ const GovernmentDashboard: React.FC = () => {
 
                         {/* Location-based grouped complaint boxes */}
                         {sortedVillages.length === 0 ? (
-                            <div className="empty-state">
+                            <div className="empty-state" style={{ marginTop: '2.5rem' }}>
                                 <div className="empty-icon">✅</div>
                                 <h3>No Active Complaints</h3>
                                 <p>All complaints have been resolved!</p>
                             </div>
                         ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', width: '100%' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', width: '100%', marginTop: '2.5rem' }}>
                                 {sortedVillages.map(village => {
                                     const villageComplaints = activeSidebarItem === 'overview'
                                         ? villageGroups[village]
