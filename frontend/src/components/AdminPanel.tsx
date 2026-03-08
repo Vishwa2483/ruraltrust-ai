@@ -6,6 +6,7 @@ import {
     toggleGovernmentStatus,
     deleteGovernmentAccount,
     getUser,
+    logout,
     type GovernmentAccount,
 } from '../services/authApi';
 
@@ -107,16 +108,22 @@ const AdminPanel: React.FC = () => {
     };
 
     const handleDeleteAccount = async (id: string, name: string) => {
-        if (!confirm(`Are you sure you want to delete account for ${name}?`)) {
-            return;
-        }
+        if (!window.confirm(`Are you sure you want to delete the account for ${name}?`)) return;
 
+        setLoading(true);
         try {
             await deleteGovernmentAccount(id);
             fetchGovernmentList();
-        } catch (err) {
-            alert('Failed to delete account');
+        } catch (err: any) {
+            setError(err.response?.data?.error || 'Failed to delete account');
+        } finally {
+            setLoading(false);
         }
+    };
+
+    const handleLogout = () => {
+        logout();
+        window.location.href = '/admin'; // Force reload to show login screen
     };
 
     const handleViewQR = async (id: string) => {
@@ -173,10 +180,32 @@ const AdminPanel: React.FC = () => {
     return (
         <div className="admin-panel">
             <div className="admin-header">
-                <h2>⚙️ Government Account Management</h2>
-                <button className="create-btn" onClick={() => setShowCreateForm(!showCreateForm)}>
-                    {showCreateForm ? '✕ Cancel' : '+ Create New Account'}
-                </button>
+                <div>
+                    <h2>⚙️ Government Account Management</h2>
+                    <p style={{ color: '#94a3b8', margin: '4px 0 0', fontSize: '14px' }}>System Administrator Dashboard</p>
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                    <button className="create-btn" onClick={() => setShowCreateForm(!showCreateForm)}>
+                        {showCreateForm ? '✕ Cancel' : '+ Create New Account'}
+                    </button>
+                    <button
+                        onClick={handleLogout}
+                        style={{
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            border: '1px solid #ef4444',
+                            color: '#ef4444',
+                            padding: '10px 18px',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseOver={(e) => { e.currentTarget.style.background = '#ef4444'; e.currentTarget.style.color = '#fff' }}
+                        onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.color = '#ef4444' }}
+                    >
+                        🚪 Logout
+                    </button>
+                </div>
             </div>
 
             {showCreateForm && (

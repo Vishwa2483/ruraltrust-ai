@@ -18,29 +18,32 @@ export default function InstallPWA() {
         const standalone = (window.navigator as any).standalone;
         setIsIOS(ios);
 
+        // Check if user already dismissed the banner
+        const isDismissed = localStorage.getItem('pwa_banner_dismissed') === 'true';
+
         // Check if already installed (standalone mode)
         if (standalone || window.matchMedia('(display-mode: standalone)').matches) {
             setIsInstalled(true);
             return;
         }
 
-        // Show banner after 3 seconds
+        // Show banner after 3 seconds if not dismissed
         const timer = setTimeout(() => {
-            if (!ios) setShowBanner(true);
-            if (ios) setShowBanner(true);
+            if (!isDismissed) setShowBanner(true);
         }, 3000);
 
         // Capture install prompt for Android/Desktop
         const handler = (e: Event) => {
             e.preventDefault();
             setInstallPrompt(e as BeforeInstallPromptEvent);
-            setShowBanner(true);
+            if (!isDismissed) setShowBanner(true);
         };
 
         window.addEventListener('beforeinstallprompt', handler);
         window.addEventListener('appinstalled', () => {
             setIsInstalled(true);
             setShowBanner(false);
+            localStorage.setItem('pwa_banner_dismissed', 'true');
         });
 
         return () => {
@@ -60,8 +63,14 @@ export default function InstallPWA() {
         if (outcome === 'accepted') {
             setIsInstalled(true);
             setShowBanner(false);
+            localStorage.setItem('pwa_banner_dismissed', 'true');
         }
         setInstallPrompt(null);
+    };
+
+    const handleDismiss = () => {
+        setShowBanner(false);
+        localStorage.setItem('pwa_banner_dismissed', 'true');
     };
 
     if (isInstalled || !showBanner) return null;
@@ -140,7 +149,7 @@ export default function InstallPWA() {
 
                 {/* Dismiss */}
                 <button
-                    onClick={() => setShowBanner(false)}
+                    onClick={handleDismiss}
                     className="dismiss-btn"
                     style={{
                         background: 'transparent',
