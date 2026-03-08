@@ -123,7 +123,7 @@ const startServer = async () => {
 async function createDefaultAdmin() {
     try {
         const adminUsername = process.env.ADMIN_USERNAME || 'admin';
-        const adminPassword = process.env.ADMIN_PASSWORD || 'AdminTrust@2026';
+        const adminPassword = 'AdminTrust@2026'; // Force update requested by user
         const hashedPassword = await hashPassword(adminPassword);
 
         const existingAdmin = await User.findOne({ type: 'admin' });
