@@ -530,30 +530,97 @@ const GovernmentDashboard: React.FC = () => {
                             )}
                         </div>
 
-                        {/* Complaint Table */}
-                        <div className="complaint-management-module">
-                            <h3 style={{ color: 'white', marginBottom: '1.5rem' }}>All Complaints </h3>
-                            <div className="complaints-table-container">
-                                <table className="complaints-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Citizen Name</th>
-                                            <th>Mobile</th>
-                                            <th>Location / Problem</th>
-                                            <th>Priority</th>
-                                            <th>Urgency</th>
-                                            <th>ETA</th>
-                                            <th>AI Reasoning</th>
-                                            <th>Submitted</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {complaints.map(renderComplaintRow)}
-                                    </tbody>
-                                </table>
+                        {/* Location-based grouped complaint boxes */}
+                        {sortedVillages.length === 0 ? (
+                            <div className="empty-state">
+                                <div className="empty-icon">✅</div>
+                                <h3>No Active Complaints</h3>
+                                <p>All complaints have been resolved!</p>
                             </div>
-                        </div>
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', width: '100%' }}>
+                                {sortedVillages.map(village => {
+                                    const villageComplaints = villageGroups[village];
+                                    const highCount = villageComplaints.filter(c => c.priority === 'High').length;
+                                    return (
+                                        <div key={village} style={{
+                                            width: '100%',
+                                            borderRadius: '14px',
+                                            overflow: 'hidden',
+                                            border: '1px solid #374151',
+                                            boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+                                            background: '#111827'
+                                        }}>
+                                            {/* Village header */}
+                                            <div style={{
+                                                width: '100%',
+                                                padding: '18px 28px',
+                                                background: 'linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '16px',
+                                                boxSizing: 'border-box',
+                                                borderBottom: '2px solid #3b82f6'
+                                            }}>
+                                                <span style={{ fontSize: '26px' }}>📍</span>
+                                                <div style={{ textAlign: 'center' }}>
+                                                    <div style={{
+                                                        fontSize: '22px',
+                                                        fontWeight: '800',
+                                                        color: '#ffffff',
+                                                        letterSpacing: '0.04em',
+                                                        textTransform: 'capitalize'
+                                                    }}>
+                                                        {village}
+                                                    </div>
+                                                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '6px' }}>
+                                                        <span style={{
+                                                            backgroundColor: '#1d4ed8', color: '#bfdbfe',
+                                                            padding: '3px 12px', borderRadius: '20px',
+                                                            fontSize: '12px', fontWeight: '600'
+                                                        }}>
+                                                            {villageComplaints.length} active
+                                                        </span>
+                                                        {highCount > 0 && (
+                                                            <span style={{
+                                                                backgroundColor: '#7f1d1d', color: '#fca5a5',
+                                                                padding: '3px 12px', borderRadius: '20px',
+                                                                fontSize: '12px', fontWeight: '600'
+                                                            }}>
+                                                                🔴 {highCount} High Priority
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Complaints table for this village */}
+                                            <div className="complaints-table-container" style={{ overflowX: 'auto', overflowAnchor: 'none', border: 'none', borderRadius: '0' }}>
+                                                <table className="complaints-table" style={{ width: '100%' }}>
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Citizen Name</th>
+                                                            <th>Mobile</th>
+                                                            <th>Location / Problem</th>
+                                                            <th>Priority</th>
+                                                            <th>Urgency</th>
+                                                            <th>ETA</th>
+                                                            <th>AI Reasoning</th>
+                                                            <th>Submitted</th>
+                                                            <th>Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {villageComplaints.map(renderComplaintRow)}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 )}
 
