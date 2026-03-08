@@ -74,7 +74,7 @@ function App() {
                 </button>
             </nav>
 
-            <main className="main-content">
+            <main className={activeTab === 'dashboard' ? 'main-content-full' : 'main-content'}>
                 {activeTab === 'citizen' && <CitizenPortal />}
                 {activeTab === 'dashboard' && <GovernmentDashboard />}
                 {activeTab === 'history' && <ComplaintHistory />}
