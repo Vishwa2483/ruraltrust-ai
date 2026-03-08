@@ -158,28 +158,18 @@ export class ResourceAllocationService {
             });
         }
 
-        // Fallback filter: only show the highest available tier
-        const hasHigh = recommendations.some(r => r.priority === 'High');
-        const hasMedium = recommendations.some(r => r.priority === 'Medium');
+        // Show all recommendations sorted by score
+        const allRecommendations = [...recommendations];
+        allRecommendations.sort((a, b) => b.resourceScore - a.resourceScore);
 
-        let filteredRecommendations = recommendations;
-        if (hasHigh) {
-            filteredRecommendations = recommendations.filter(r => r.priority === 'High');
-        } else if (hasMedium) {
-            filteredRecommendations = recommendations.filter(r => r.priority === 'Medium');
-        } else {
-            filteredRecommendations = recommendations.filter(r => r.priority === 'Low');
-        }
+        // Return top 50 recommendations (effectively "everything" for most use cases)
+        const topResult = allRecommendations.slice(0, 50);
 
-        // Sort by resource score descending, return top 10
-        filteredRecommendations.sort((a, b) => b.resourceScore - a.resourceScore);
-        const top10 = filteredRecommendations.slice(0, 10);
-
-        const totalTeamsNeeded = top10.reduce((sum, r) => sum + r.recommendedTeams, 0);
-        const criticalZones = top10.length; // renamed metric essentially
+        const totalTeamsNeeded = topResult.reduce((sum, r) => sum + r.recommendedTeams, 0);
+        const criticalZones = topResult.length;
 
         return {
-            recommendations: top10,
+            recommendations: topResult,
             totalTeamsNeeded,
             criticalZones,
             generatedAt: new Date().toISOString()
