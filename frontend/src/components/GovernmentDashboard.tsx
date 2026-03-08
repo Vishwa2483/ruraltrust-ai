@@ -457,9 +457,6 @@ const GovernmentDashboard: React.FC = () => {
                 <div className={`sidebar-item ${activeSidebarItem === 'policy' ? 'active' : ''}`} onClick={() => setActiveSidebarItem('policy')}>
                     <span className="sidebar-icon">📜</span> Policy Simulator
                 </div>
-                <div className={`sidebar-item ${activeSidebarItem === 'future' ? 'active' : ''}`} onClick={() => setActiveSidebarItem('future')}>
-                    <span className="sidebar-icon">🔮</span> Future Prediction
-                </div>
                 <div className={`sidebar-item ${activeSidebarItem === 'merge' ? 'active' : ''}`} onClick={() => setActiveSidebarItem('merge')}>
                     <span className="sidebar-icon">🔗</span> Merge & Resolve
                 </div>
