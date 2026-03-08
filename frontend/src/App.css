@@ -527,16 +527,21 @@ body {
   background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 0.75rem 1rem;
-  font-size: 1.2rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
   cursor: pointer;
   transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .refresh-btn:hover {
   background: var(--accent-primary);
   border-color: var(--accent-primary);
-  transform: rotate(90deg);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Table */
