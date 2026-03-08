@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import mongoose from 'mongoose';
 import { connectDatabase } from './config/database';
 import complaintRoutes from './routes/complaints';
 import authRoutes from './routes/auth';
@@ -57,6 +58,39 @@ const healthHandler = (req: express.Request, res: express.Response) => {
 app.get('/health', healthHandler);
 app.get('/api/health', healthHandler);
 
+// One-time data fix: re-insert complaints with proper ObjectId _id and refs
+app.get('/api/fix-data', async (req, res) => {
+    try {
+        const db = mongoose.connection.db!;
+        const complaints = await db.collection('complaints').find({}).toArray();
+        let fixed = 0, skipped = 0;
+        for (const doc of complaints) {
+            if (typeof doc._id === 'string') {
+                try {
+                    const newDoc: any = { ...doc, _id: new mongoose.Types.ObjectId(doc._id) };
+                    if (typeof newDoc.citizenId === 'string') newDoc.citizenId = new mongoose.Types.ObjectId(newDoc.citizenId);
+                    if (newDoc.citizenId?.$oid) newDoc.citizenId = new mongoose.Types.ObjectId(newDoc.citizenId.$oid);
+                    if (typeof newDoc.resolvedBy === 'string') newDoc.resolvedBy = new mongoose.Types.ObjectId(newDoc.resolvedBy);
+                    if (typeof newDoc.rejectedBy === 'string') newDoc.rejectedBy = new mongoose.Types.ObjectId(newDoc.rejectedBy);
+                    await db.collection('complaints').deleteOne({ _id: doc._id as any });
+                    await db.collection('complaints').insertOne(newDoc);
+                    fixed++;
+                } catch { skipped++; }
+            } else {
+                const upd: any = {};
+                if (typeof doc.citizenId === 'string') try { upd.citizenId = new mongoose.Types.ObjectId(doc.citizenId); } catch { }
+                if (doc.citizenId?.$oid) upd.citizenId = new mongoose.Types.ObjectId(doc.citizenId.$oid);
+                if (Object.keys(upd).length) { await db.collection('complaints').updateOne({ _id: doc._id }, { $set: upd }); fixed++; }
+                else skipped++;
+            }
+        }
+        await db.collection('users').updateOne(
+            { type: 'admin', $or: [{ name: { $exists: false } }, { name: null }, { name: '' }] },
+            { $set: { name: 'System Administrator' } }
+        );
+        res.json({ done: true, total: complaints.length, fixed, skipped });
+    } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 
 // Root endpoint
 app.get('/', (req, res) => {
