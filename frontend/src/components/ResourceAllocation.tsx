@@ -45,6 +45,7 @@ const ResourceAllocation: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+    const [selectedPriority, setSelectedPriority] = useState<'High' | 'Medium' | 'Low' | null>(null);
 
     const fetchData = async () => {
         setLoading(true);
@@ -255,38 +256,209 @@ const ResourceAllocation: React.FC = () => {
                             </div>
 
                             {/* ── Workforce Summary ── */}
-                            <h3 style={{ color: '#f3f4f6', marginTop: 0, marginBottom: '16px' }}>👷 Workforce Requirement Summary</h3>
-                            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                            <h3 style={{ color: '#f3f4f6', marginTop: 0, marginBottom: '16px' }}>👷 AI Resource Allocation Controls</h3>
+                            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '30px' }}>
                                 {(['High', 'Medium', 'Low'] as const).map(level => {
                                     const zones = data.recommendations.filter(r => r.priority === level);
-                                    const teams = zones.reduce((sum, r) => sum + r.recommendedTeams, 0);
-                                    if (zones.length === 0) return null;
                                     return (
-                                        <div key={level} style={{
-                                            flex: '1 1 160px',
-                                            backgroundColor: PRIORITY_COLORS[level].bg,
-                                            border: `1px solid ${PRIORITY_COLORS[level].border}`,
-                                            borderRadius: '8px',
-                                            padding: '16px',
-                                            textAlign: 'center'
-                                        }}>
-                                            <div style={{ fontSize: '1.8em', fontWeight: 'bold', color: PRIORITY_COLORS[level].text }}>{teams}</div>
-                                            <div style={{ color: PRIORITY_COLORS[level].text, fontWeight: 600 }}>{level} Zone Teams</div>
-                                            <div style={{ color: '#9ca3af', fontSize: '0.75rem', marginTop: '4px' }}>{zones.length} zone{zones.length > 1 ? 's' : ''}</div>
-                                        </div>
+                                        <button
+                                            key={level}
+                                            onClick={() => setSelectedPriority(level)}
+                                            style={{
+                                                flex: '1 1 160px',
+                                                backgroundColor: selectedPriority === level ? PRIORITY_COLORS[level].badge : PRIORITY_COLORS[level].bg,
+                                                border: `2px solid ${PRIORITY_COLORS[level].border}`,
+                                                borderRadius: '12px',
+                                                padding: '20px',
+                                                textAlign: 'center',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s ease',
+                                                transform: selectedPriority === level ? 'scale(1.05)' : 'scale(1)',
+                                                boxShadow: selectedPriority === level ? `0 0 15px ${PRIORITY_COLORS[level].border}` : 'none'
+                                            }}
+                                        >
+                                            <div style={{ color: '#fff', fontWeight: 800, fontSize: '1.2rem', marginBottom: '4px' }}>{level} Priority</div>
+                                            <div style={{ color: PRIORITY_COLORS[level].text, fontSize: '0.8rem' }}>
+                                                {zones.length} Zones Detected
+                                            </div>
+                                            <div style={{ color: '#fff', fontSize: '0.7rem', marginTop: '8px', fontStyle: 'italic' }}>
+                                                Click for details
+                                            </div>
+                                        </button>
                                     );
                                 })}
+                            </div>
+
+                            {/* Modal Popup */}
+                            {selectedPriority && (
                                 <div style={{
-                                    flex: '1 1 160px',
-                                    backgroundColor: '#0f172a',
-                                    border: '2px solid #a78bfa',
-                                    borderRadius: '8px',
-                                    padding: '16px',
-                                    textAlign: 'center'
+                                    position: 'fixed',
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    backgroundColor: 'rgba(0,0,0,0.85)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    zIndex: 1000,
+                                    backdropFilter: 'blur(5px)'
                                 }}>
-                                    <div style={{ fontSize: '1.8em', fontWeight: 'bold', color: '#a78bfa' }}>{data.totalTeamsNeeded}</div>
-                                    <div style={{ color: '#a78bfa', fontWeight: 600 }}>Total Teams</div>
-                                    <div style={{ color: '#6b7280', fontSize: '0.75rem', marginTop: '4px' }}>across all zones</div>
+                                    <div style={{
+                                        backgroundColor: '#1f2937',
+                                        borderRadius: '16px',
+                                        width: '90%',
+                                        maxWidth: '800px',
+                                        maxHeight: '85vh',
+                                        overflow: 'hidden',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        border: `2px solid ${PRIORITY_COLORS[selectedPriority].border}`,
+                                        boxShadow: `0 0 30px ${PRIORITY_COLORS[selectedPriority].border}33`
+                                    }}>
+                                        {/* Modal Header */}
+                                        <div style={{
+                                            padding: '20px 24px',
+                                            backgroundColor: PRIORITY_COLORS[selectedPriority].bg,
+                                            borderBottom: `1px solid ${PRIORITY_COLORS[selectedPriority].border}`,
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center'
+                                        }}>
+                                            <div>
+                                                <h2 style={{ color: '#fff', margin: 0 }}>
+                                                    🚨 {selectedPriority} Priority Recommendations
+                                                </h2>
+                                                <p style={{ color: PRIORITY_COLORS[selectedPriority].text, margin: '4px 0 0', fontSize: '0.9rem' }}>
+                                                    Immediate actions required for {selectedPriority.toLowerCase()} risk zones
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={() => setSelectedPriority(null)}
+                                                style={{ background: 'none', border: 'none', color: '#9ca3af', fontSize: '24px', cursor: 'pointer' }}
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+
+                                        {/* Modal Body */}
+                                        <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
+                                            {data.recommendations.filter(r => r.priority === selectedPriority).length === 0 ? (
+                                                <div style={{ textAlign: 'center', color: '#9ca3af', padding: '40px' }}>
+                                                    No {selectedPriority.toLowerCase()} priority zones detected.
+                                                </div>
+                                            ) : (
+                                                <div style={{ display: 'grid', gap: '20px' }}>
+                                                    {data.recommendations.filter(r => r.priority === selectedPriority).map((zone, idx) => (
+                                                        <div key={idx} style={{
+                                                            backgroundColor: '#111827',
+                                                            borderRadius: '12px',
+                                                            padding: '20px',
+                                                            border: `1px solid ${PRIORITY_COLORS[selectedPriority].border}44`,
+                                                            display: 'flex',
+                                                            gap: '20px'
+                                                        }}>
+                                                            <div style={{
+                                                                width: '50px',
+                                                                height: '50px',
+                                                                backgroundColor: PRIORITY_COLORS[selectedPriority].bg,
+                                                                borderRadius: '10px',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                fontSize: '1.8rem',
+                                                                flexShrink: 0
+                                                            }}>
+                                                                {CATEGORY_ICONS[zone.category] || '📋'}
+                                                            </div>
+                                                            <div style={{ flex: 1 }}>
+                                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                                                    <h4 style={{ margin: 0, color: '#f3f4f6', fontSize: '1.2rem' }}>{zone.village} - {zone.category}</h4>
+                                                                    <div style={{ color: '#34d399', fontWeight: 'bold' }}>{zone.recommendedTeams} Teams</div>
+                                                                </div>
+                                                                <div style={{ color: '#ec4899', fontWeight: 600, marginBottom: '8px', fontSize: '0.95rem' }}>
+                                                                    ⚡ Action: {zone.actionText}
+                                                                </div>
+                                                                <div style={{ color: '#9ca3af', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                                                                    <strong>Reasoning:</strong> {zone.reason}
+                                                                </div>
+                                                                <div style={{ display: 'flex', gap: '20px', marginTop: '12px', borderTop: '1px solid #374151', paddingTop: '12px' }}>
+                                                                    <div style={{ textAlign: 'center' }}>
+                                                                        <div style={{ color: '#6b7280', fontSize: '0.7rem', textTransform: 'uppercase' }}>Score</div>
+                                                                        <div style={{ color: '#fff', fontWeight: 700 }}>{zone.resourceScore.toFixed(1)}</div>
+                                                                    </div>
+                                                                    <div style={{ textAlign: 'center' }}>
+                                                                        <div style={{ color: '#6b7280', fontSize: '0.7rem', textTransform: 'uppercase' }}>Reports</div>
+                                                                        <div style={{ color: '#fff', fontWeight: 700 }}>{zone.complaintCount}</div>
+                                                                    </div>
+                                                                    <div style={{ textAlign: 'center' }}>
+                                                                        <div style={{ color: '#6b7280', fontSize: '0.7rem', textTransform: 'uppercase' }}>Avg Urgency</div>
+                                                                        <div style={{ color: '#fff', fontWeight: 700 }}>{zone.avgUrgency}/10</div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Modal Footer */}
+                                        <div style={{ padding: '16px 24px', backgroundColor: '#111827', borderTop: '1px solid #374151', textAlign: 'right' }}>
+                                            <button
+                                                onClick={() => setSelectedPriority(null)}
+                                                style={{
+                                                    padding: '10px 24px',
+                                                    borderRadius: '8px',
+                                                    backgroundColor: '#374151',
+                                                    color: '#fff',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    fontWeight: 600
+                                                }}
+                                            >
+                                                Close
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div style={{ marginTop: '20px' }}>
+                                {/* ── Workforce Summary ── */}
+                                <h3 style={{ color: '#f3f4f6', marginTop: 0, marginBottom: '16px' }}>👷 Workforce Requirement Summary</h3>
+                                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                                    {(['High', 'Medium', 'Low'] as const).map(level => {
+                                        const zones = data.recommendations.filter(r => r.priority === level);
+                                        const teams = zones.reduce((sum, r) => sum + r.recommendedTeams, 0);
+                                        if (zones.length === 0) return null;
+                                        return (
+                                            <div key={level} style={{
+                                                flex: '1 1 160px',
+                                                backgroundColor: PRIORITY_COLORS[level].bg,
+                                                border: `1px solid ${PRIORITY_COLORS[level].border}`,
+                                                borderRadius: '8px',
+                                                padding: '16px',
+                                                textAlign: 'center'
+                                            }}>
+                                                <div style={{ fontSize: '1.8em', fontWeight: 'bold', color: PRIORITY_COLORS[level].text }}>{teams}</div>
+                                                <div style={{ color: PRIORITY_COLORS[level].text, fontWeight: 600 }}>{level} Zone Teams</div>
+                                                <div style={{ color: '#9ca3af', fontSize: '0.75rem', marginTop: '4px' }}>{zones.length} zone{zones.length > 1 ? 's' : ''}</div>
+                                            </div>
+                                        );
+                                    })}
+                                    <div style={{
+                                        flex: '1 1 160px',
+                                        backgroundColor: '#0f172a',
+                                        border: '2px solid #a78bfa',
+                                        borderRadius: '8px',
+                                        padding: '16px',
+                                        textAlign: 'center'
+                                    }}>
+                                        <div style={{ fontSize: '1.8em', fontWeight: 'bold', color: '#a78bfa' }}>{data.totalTeamsNeeded}</div>
+                                        <div style={{ color: '#a78bfa', fontWeight: 600 }}>Total Teams</div>
+                                        <div style={{ color: '#6b7280', fontSize: '0.75rem', marginTop: '4px' }}>across all zones</div>
+                                    </div>
                                 </div>
                             </div>
                         </>

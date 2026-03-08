@@ -57,17 +57,26 @@ const GovernmentDashboard: React.FC = () => {
         setResolvingId(id);
         try {
             await Promise.all(similarComplaints.map(c => resolveComplaint(c._id)));
-            setComplaints(complaints.filter(c =>
+
+            // Remove resolved complaints from current state
+            setComplaints(prev => prev.filter(c =>
                 !(c.village === complaint.village &&
                     c.problemType.toLowerCase() === complaint.problemType.toLowerCase())
             ));
+
             const message = complaintCount > 1
                 ? `✅ Resolved ${complaintCount} similar complaints for "${complaint.problemType}" in ${complaint.village}!`
                 : '✅ Complaint resolved successfully!';
             setSuccessMessage(message);
-            setTimeout(() => setSuccessMessage(null), 6000);
+
+            // Refetch to ensure everything is in sync (e.g. if some other item changed)
+            setTimeout(() => {
+                fetchComplaints();
+                setSuccessMessage(null);
+            }, 3000);
         } catch (err: any) {
             alert(err.response?.data?.error || 'Failed to resolve complaint');
+            fetchComplaints(); // Refresh anyway if something went wrong
         } finally {
             setResolvingId(null);
         }
