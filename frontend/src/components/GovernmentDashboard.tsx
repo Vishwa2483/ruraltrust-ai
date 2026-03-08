@@ -540,7 +540,7 @@ const GovernmentDashboard: React.FC = () => {
                                     if (villageComplaints.length === 0) return null;
 
                                     const highCount = villageComplaints.filter(c => c.priority === 'High').length;
-                                    const isExpanded = expandedVillages[village] !== false; // Active by default
+                                    const isExpanded = !!expandedVillages[village]; // Closed by default
                                     const toggleVillage = () => {
                                         setExpandedVillages(prev => ({ ...prev, [village]: !isExpanded }));
                                     };
@@ -560,22 +560,22 @@ const GovernmentDashboard: React.FC = () => {
                                                 onClick={toggleVillage}
                                                 style={{
                                                     width: '100%',
-                                                    padding: '18px 28px',
+                                                    padding: '12px 24px',
                                                     background: 'linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%)',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
-                                                    gap: '16px',
+                                                    gap: '12px',
                                                     boxSizing: 'border-box',
                                                     borderBottom: isExpanded ? '2px solid #3b82f6' : 'none',
                                                     cursor: 'pointer',
                                                     userSelect: 'none',
                                                     position: 'relative'
                                                 }}>
-                                                <span style={{ fontSize: '26px' }}>📍</span>
+                                                <span style={{ fontSize: '20px' }}>📍</span>
                                                 <div style={{ textAlign: 'center' }}>
                                                     <div style={{
-                                                        fontSize: '22px',
+                                                        fontSize: '18px',
                                                         fontWeight: '800',
                                                         color: '#ffffff',
                                                         letterSpacing: '0.04em',
@@ -615,28 +615,30 @@ const GovernmentDashboard: React.FC = () => {
                                             </div>
 
                                             {/* Complaints table for this village */}
-                                            {isExpanded && (
-                                                <div className="complaints-table-container" style={{ overflowX: 'auto', overflowAnchor: 'none', border: 'none', borderRadius: '0', animation: 'fadeIn 0.3s' }}>
-                                                    <table className="complaints-table" style={{ width: '100%' }}>
-                                                        <thead>
-                                                            <tr>
-                                                                <th>Citizen Name</th>
-                                                                <th>Mobile</th>
-                                                                <th>Location / Problem</th>
-                                                                <th>Priority</th>
-                                                                <th>Urgency</th>
-                                                                <th>ETA</th>
-                                                                <th>AI Reasoning</th>
-                                                                <th>Submitted</th>
-                                                                <th>Action</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {villageComplaints.map(renderComplaintRow)}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            )}
+                                            {
+                                                isExpanded && (
+                                                    <div className="complaints-table-container" style={{ overflowX: 'auto', overflowAnchor: 'none', border: 'none', borderRadius: '0', animation: 'fadeIn 0.3s' }}>
+                                                        <table className="complaints-table" style={{ width: '100%' }}>
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Citizen Name</th>
+                                                                    <th>Mobile</th>
+                                                                    <th>Location / Problem</th>
+                                                                    <th>Priority</th>
+                                                                    <th>Urgency</th>
+                                                                    <th>ETA</th>
+                                                                    <th>AI Reasoning</th>
+                                                                    <th>Submitted</th>
+                                                                    <th>Action</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {villageComplaints.map(renderComplaintRow)}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                )
+                                            }
                                         </div>
                                     );
                                 })}
@@ -762,7 +764,7 @@ const GovernmentDashboard: React.FC = () => {
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 };
 
