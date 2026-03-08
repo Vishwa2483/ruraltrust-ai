@@ -494,7 +494,7 @@ const GovernmentDashboard: React.FC = () => {
                                 </h2>
                                 <p style={{ color: 'var(--text-muted)' }}>High-level metrics and active complaints.</p>
                             </div>
-                            <button onClick={fetchComplaints} className="refresh-btn" title="Refresh">🔄 Refresh Data</button>
+                            <button onClick={fetchComplaints} className="refresh-btn" style={{ whiteSpace: 'nowrap' }} title="Refresh">🔄 Refresh Data</button>
                         </div>
 
                         {successMessage && (
