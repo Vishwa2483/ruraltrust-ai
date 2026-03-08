@@ -51,92 +51,13 @@ app.use('/api/chat', chatRoutes);
 const healthHandler = (req: express.Request, res: express.Response) => {
     res.json({
         status: 'OK',
-        message: 'RuralTrust AI Backend v2.1.0-FIX is running',
+        message: 'RuralTrust AI Backend is running',
         timestamp: new Date().toISOString()
     });
 };
 app.get('/health', healthHandler);
 app.get('/api/health', healthHandler);
 
-// Final fix: ensure all IDs are ObjectIds and linkages are correct
-app.get('/api/fix-all-data', async (req, res) => {
-    try {
-        const db = mongoose.connection.db!;
-        const User = require('./models/User').default;
-        const Complaint = require('./models/Complaint').default;
-
-        // 1. Fix Users _id
-        const userDocs = await db.collection('users').find({}).toArray();
-        const idMap: Record<string, mongoose.Types.ObjectId> = {};
-        let usersConverted = 0;
-
-        for (const u of userDocs) {
-            const currentIdStr = u._id.toString();
-            if (typeof u._id === 'string') {
-                const newId = new mongoose.Types.ObjectId(u._id);
-                idMap[currentIdStr] = newId;
-                const newDoc = { ...u, _id: newId };
-                await db.collection('users').deleteOne({ _id: u._id as any });
-                try { await db.collection('users').insertOne(newDoc); } catch (e) { /* ignore duplicates */ }
-                usersConverted++;
-            } else {
-                idMap[currentIdStr] = u._id;
-            }
-        }
-
-        // 2. Fix Complaints _id and citizenId
-        const complaintDocs = await db.collection('complaints').find({}).toArray();
-        let complaintsFixed = 0;
-        let citizenRefsFixed = 0;
-
-        for (const c of complaintDocs) {
-            let needsUpdate = false;
-            let currentDoc = { ...c };
-
-            // Fix complaint _id if it's a string
-            if (typeof c._id === 'string') {
-                const newId = new mongoose.Types.ObjectId(c._id);
-                currentDoc._id = newId;
-                await db.collection('complaints').deleteOne({ _id: c._id as any });
-                needsUpdate = true;
-            }
-
-            // Fix citizenId ref
-            if (currentDoc.citizenId) {
-                const cidStr = currentDoc.citizenId.toString();
-                const targetOid = idMap[cidStr];
-
-                // If it's a string or if it's an object that doesn't strictly match the map
-                if (typeof currentDoc.citizenId === 'string' || (targetOid && currentDoc.citizenId.toString() !== targetOid.toString())) {
-                    currentDoc.citizenId = targetOid || new mongoose.Types.ObjectId(cidStr);
-                    needsUpdate = true;
-                    citizenRefsFixed++;
-                }
-            }
-
-            if (needsUpdate) {
-                try { await db.collection('complaints').insertOne(currentDoc); } catch (e) {
-                    // If insert fails (maybe already exists), try update
-                    await db.collection('complaints').updateOne({ _id: currentDoc._id }, { $set: { citizenId: currentDoc.citizenId } });
-                }
-                complaintsFixed++;
-            }
-        }
-
-        // 3. Verify one
-        const sample = await Complaint.findOne({ citizenId: { $exists: true } }).populate('citizenId');
-
-        res.json({
-            status: 'success',
-            usersConverted,
-            complaintsFixed,
-            citizenRefsFixed,
-            samplePopulated: sample && sample.citizenId ? sample.citizenId.name : 'FAIL'
-        });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message, stack: e.stack });
-    }
-});
 
 // Root endpoint
 app.get('/', (req, res) => {
