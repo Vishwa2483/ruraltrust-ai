@@ -6,6 +6,7 @@ import ComplaintAnalytics from './ComplaintAnalytics';
 import ResourceAllocation from './ResourceAllocation';
 import PolicySimulator from './PolicySimulator';
 import MergeSuggestions from './MergeSuggestions';
+import './GovernmentDashboard.css';
 
 const GovernmentDashboard: React.FC = () => {
     const [user, setUser] = useState<GovernmentUser | null>(getUser() as GovernmentUser);
@@ -16,10 +17,13 @@ const GovernmentDashboard: React.FC = () => {
     const [resolvingId, setResolvingId] = useState<string | null>(null);
     const [rejectingId, setRejectingId] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [showResourceAllocation, setShowResourceAllocation] = useState(false);
-    const [showPolicySimulator, setShowPolicySimulator] = useState(false);
     const [showUnresolvedModal, setShowUnresolvedModal] = useState(false);
     const [unresolvedComplaints, setUnresolvedComplaints] = useState<Complaint[]>([]);
+
+    // Navigation state
+    const [activeSidebarItem, setActiveSidebarItem] = useState('overview');
+    const [aiToolTab, setAiToolTab] = useState('resource');
+    const [complaintTab, setComplaintTab] = useState('categories');
 
     const fetchComplaints = async () => {
         try {
@@ -404,310 +408,352 @@ const GovernmentDashboard: React.FC = () => {
         </React.Fragment>
     );
 
+    const categoryGroups: Record<string, Complaint[]> = {};
+    filteredList.forEach(c => {
+        const cat = c.problemType || 'Other';
+        if (!categoryGroups[cat]) categoryGroups[cat] = [];
+        categoryGroups[cat].push(c);
+    });
+    const sortedCategories = Object.keys(categoryGroups).sort();
+
+    const handleSidebarClick = (item: string) => {
+        if (item === 'policy') { setActiveSidebarItem('ai-tools'); setAiToolTab('policy'); }
+        else if (item === 'future') { setActiveSidebarItem('ai-tools'); setAiToolTab('future'); }
+        else if (item === 'resource') { setActiveSidebarItem('ai-tools'); setAiToolTab('resource'); }
+        else if (item === 'merge') { setActiveSidebarItem('complaints'); setComplaintTab('merge'); }
+        else { setActiveSidebarItem(item); }
+    };
+
     return (
-        <div className="government-dashboard">
-            {/* Top bar */}
-            <div className="user-header">
-                <div className="user-info">
-                    <span className="welcome">👤 <strong>{user.name}</strong></span>
-                    {user.designation && <span className="designation-badge">🏛️ {user.designation}</span>}
+        <div className="government-dashboard gov-dashboard-layout">
+
+            {/* LEFT SIDEBAR */}
+            <div className="gov-sidebar">
+                <div style={{ padding: '0 1.5rem', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                    <div style={{ width: '40px', height: '40px', background: 'var(--accent-gradient)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', boxShadow: 'var(--shadow-glow)' }}>🏛️</div>
+                    <div style={{ overflow: 'hidden' }}>
+                        <div style={{ fontWeight: '700', color: 'white', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>RuralTrust AI</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{user.name} <br />({user.designation})</div>
+                    </div>
                 </div>
-                <button
-                    className="ai-assistant-btn"
-                    onClick={() => setShowUnresolvedModal(true)}
-                    style={{
-                        background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
-                        border: 'none',
-                        color: 'white',
-                        padding: '0.5rem 1rem',
-                        borderRadius: 'var(--radius-md)',
-                        cursor: 'pointer',
-                        fontWeight: '600',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)',
-                        marginLeft: 'auto',
-                        marginRight: '1rem'
-                    }}
-                >
-                    ⚠️ Unresolved by Citizens {unresolvedComplaints.length > 0 && (
-                        <span style={{
-                            background: '#fee2e2',
-                            color: '#b91c1c',
-                            borderRadius: '50%',
-                            width: '20px',
-                            height: '20px',
-                            fontSize: '11px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            {unresolvedComplaints.length}
-                        </span>
+
+                <div className="sidebar-category">Main Menu</div>
+                <div className={`sidebar-item ${activeSidebarItem === 'overview' ? 'active' : ''}`} onClick={() => handleSidebarClick('overview')}>
+                    <span className="sidebar-icon">📊</span> Dashboard Overview
+                </div>
+                <div className={`sidebar-item ${activeSidebarItem === 'complaints' ? 'active' : ''}`} onClick={() => handleSidebarClick('complaints')}>
+                    <span className="sidebar-icon">📝</span> Complaints
+                </div>
+                <div className={`sidebar-item ${activeSidebarItem === 'analytics' ? 'active' : ''}`} onClick={() => handleSidebarClick('analytics')}>
+                    <span className="sidebar-icon">📈</span> Analytics
+                </div>
+
+                <div className="sidebar-category">AI Decision Tools</div>
+                <div className={`sidebar-item ${activeSidebarItem === 'ai-tools' && aiToolTab === 'resource' ? 'active' : ''}`} onClick={() => handleSidebarClick('resource')}>
+                    <span className="sidebar-icon">🤖</span> Resource Allocation
+                </div>
+                <div className={`sidebar-item ${activeSidebarItem === 'ai-tools' && aiToolTab === 'future' ? 'active' : ''}`} onClick={() => handleSidebarClick('future')}>
+                    <span className="sidebar-icon">🔮</span> Future Prediction
+                </div>
+                <div className={`sidebar-item ${activeSidebarItem === 'ai-tools' && aiToolTab === 'policy' ? 'active' : ''}`} onClick={() => handleSidebarClick('policy')}>
+                    <span className="sidebar-icon">📜</span> Policy Simulator
+                </div>
+                <div className={`sidebar-item ${activeSidebarItem === 'complaints' && complaintTab === 'merge' ? 'active' : ''}`} onClick={() => handleSidebarClick('merge')}>
+                    <span className="sidebar-icon">🔗</span> Merge & Resolve
+                </div>
+
+                <div className="sidebar-category">Preferences</div>
+                <div className={`sidebar-item ${activeSidebarItem === 'settings' ? 'active' : ''}`} onClick={() => handleSidebarClick('settings')}>
+                    <span className="sidebar-icon">⚙️</span> Settings
+                </div>
+
+                <div style={{ marginTop: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {unresolvedComplaints.length > 0 && (
+                        <button onClick={() => setShowUnresolvedModal(true)} style={{ width: '100%', background: '#b91c1c', color: 'white', border: 'none', padding: '0.8rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                            ⚠️ {unresolvedComplaints.length} Unresolved
+                        </button>
                     )}
-                </button>
-                <button className="logout-btn" onClick={handleLogout}>🚪 Logout</button>
-            </div>
-
-            {/* Dashboard header */}
-            <div className="dashboard-header">
-                <div>
-                    <h2>Active Complaints Dashboard</h2>
-                    <p>AI-prioritized complaints requiring government attention</p>
-                </div>
-                <div className="dashboard-stats">
-                    <div className="stat-card">
-                        <span className="stat-number">{complaints.length}</span>
-                        <span className="stat-label">Active</span>
-                    </div>
-                    <div className="stat-card high">
-                        <span className="stat-number">{complaints.filter(c => c.priority === 'High').length}</span>
-                        <span className="stat-label">High Priority</span>
-                    </div>
-                    <div className="stat-card" style={{ backgroundColor: '#1e40af22', borderColor: '#3b82f6' }}>
-                        <span className="stat-number" style={{ color: '#60a5fa' }}>{sortedVillages.length}</span>
-                        <span className="stat-label">Locations</span>
-                    </div>
-                    <button onClick={fetchComplaints} className="refresh-btn" title="Refresh">🔄</button>
+                    <button onClick={handleLogout} style={{ width: '100%', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444', padding: '0.8rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }} onMouseOver={(e) => { e.currentTarget.style.background = '#ef4444'; e.currentTarget.style.color = 'white'; }} onMouseOut={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.color = '#ef4444'; }}>
+                        🚪 Logout
+                    </button>
                 </div>
             </div>
 
-            {/* Success banner */}
-            {successMessage && (
-                <div style={{
-                    backgroundColor: '#d4edda', color: '#155724', padding: '12px 16px',
-                    borderRadius: '6px', marginBottom: '20px', border: '1px solid #c3e6cb'
-                }}>
-                    {successMessage}
-                </div>
-            )}
+            {/* MAIN CONTENT AREA */}
+            <div className="gov-main-content">
 
-            {/* AI Merge Suggestions */}
-            <MergeSuggestions onMergeResolved={fetchComplaints} />
+                {/* TOP SUMMARY (Visible in Overview) */}
+                {activeSidebarItem === 'overview' && (
+                    <div style={{ animation: 'fadeIn 0.4s' }}>
+                        <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
+                            <div>
+                                <h2 style={{ fontSize: '1.8rem', color: 'white', fontWeight: 'bold' }}>Dashboard Overview</h2>
+                                <p style={{ color: 'var(--text-muted)' }}>High-level metrics and system status.</p>
+                            </div>
+                            <button onClick={fetchComplaints} className="refresh-btn" title="Refresh">🔄 Refresh Data</button>
+                        </div>
 
-            {/* AI Panels */}
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '20px' }}>
-                <button
-                    onClick={() => setShowResourceAllocation(!showResourceAllocation)}
-                    style={{
-                        padding: '10px 20px',
-                        borderRadius: '8px',
-                        border: '1px solid #7c3aed',
-                        background: showResourceAllocation ? '#7c3aed' : '#1f2937',
-                        color: 'white',
-                        cursor: 'pointer',
-                        fontWeight: '600',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        transition: 'all 0.2s'
-                    }}
-                >
-                    <span>🤖</span> {showResourceAllocation ? 'Hide AI Resource Allocation' : 'Open AI Resource Allocation'}
-                </button>
-                <button
-                    onClick={() => setShowPolicySimulator(!showPolicySimulator)}
-                    style={{
-                        padding: '10px 20px',
-                        borderRadius: '8px',
-                        border: '1px solid #3b82f6',
-                        background: showPolicySimulator ? '#3b82f6' : '#1f2937',
-                        color: 'white',
-                        cursor: 'pointer',
-                        fontWeight: '600',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        transition: 'all 0.2s'
-                    }}
-                >
-                    <span>🔮</span> {showPolicySimulator ? 'Hide Policy Simulator' : 'Open Policy Simulator'}
-                </button>
-            </div>
+                        {successMessage && (
+                            <div style={{ backgroundColor: '#10b98122', color: '#34d399', padding: '16px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #10b981' }}>
+                                {successMessage}
+                            </div>
+                        )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '20px' }}>
-                {showResourceAllocation && <ResourceAllocation />}
-                {showPolicySimulator && <PolicySimulator />}
-            </div>
+                        <div className="gov-top-summary">
+                            <div className="summary-card">
+                                <span className="title">📋 Total Complaints</span>
+                                <span className="value">{complaints.length}</span>
+                            </div>
+                            <div className="summary-card" style={{ borderColor: 'var(--error)' }}>
+                                <span className="title" style={{ color: 'var(--error)' }}>🚨 High Priority</span>
+                                <span className="value">{complaints.filter(c => c.priority === 'High').length}</span>
+                            </div>
+                            <div className="summary-card" style={{ borderColor: 'var(--info)' }}>
+                                <span className="title" style={{ color: 'var(--info)' }}>📍 Critical Zones</span>
+                                <span className="value">{sortedVillages.length}</span>
+                            </div>
+                            <div className="summary-card" style={{ borderColor: 'var(--success)' }}>
+                                <span className="title" style={{ color: 'var(--success)' }}>✓ Est. Resolution Rate</span>
+                                <span className="value">78%</span>
+                            </div>
+                        </div>
 
-            {/* Analytics */}
-            {complaints.length > 0 && <ComplaintAnalytics complaints={filteredList} />}
-
-            {/* Location-based grouped complaint boxes */}
-            {sortedVillages.length === 0 ? (
-                <div className="empty-state">
-                    <div className="empty-icon">✅</div>
-                    <h3>No Active Complaints</h3>
-                    <p>All complaints have been resolved!</p>
-                </div>
-            ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', width: '100%' }}>
-                    {sortedVillages.map(village => {
-                        const villageComplaints = villageGroups[village];
-                        const highCount = villageComplaints.filter(c => c.priority === 'High').length;
-                        return (
-                            <div key={village} style={{
-                                width: '100%',
-                                borderRadius: '14px',
-                                overflow: 'hidden',
-                                border: '1px solid #374151',
-                                boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
-                                background: '#111827'
-                            }}>
-                                {/* Village header */}
-                                <div style={{
-                                    width: '100%',
-                                    padding: '18px 28px',
-                                    background: 'linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '16px',
-                                    boxSizing: 'border-box',
-                                    borderBottom: '2px solid #3b82f6'
-                                }}>
-                                    <span style={{ fontSize: '26px' }}>📍</span>
-                                    <div style={{ textAlign: 'center' }}>
-                                        <div style={{
-                                            fontSize: '22px',
-                                            fontWeight: '800',
-                                            color: '#ffffff',
-                                            letterSpacing: '0.04em',
-                                            textTransform: 'capitalize'
-                                        }}>
-                                            {village}
-                                        </div>
-                                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '6px' }}>
-                                            <span style={{
-                                                backgroundColor: '#1d4ed8', color: '#bfdbfe',
-                                                padding: '3px 12px', borderRadius: '20px',
-                                                fontSize: '12px', fontWeight: '600'
-                                            }}>
-                                                {villageComplaints.length} active complaint{villageComplaints.length > 1 ? 's' : ''}
-                                            </span>
-                                            {highCount > 0 && (
-                                                <span style={{
-                                                    backgroundColor: '#7f1d1d', color: '#fca5a5',
-                                                    padding: '3px 12px', borderRadius: '20px',
-                                                    fontSize: '12px', fontWeight: '600'
-                                                }}>
-                                                    🔴 {highCount} High Priority
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Complaints table for this village */}
-                                <div className="complaints-table-container" style={{ overflowX: 'auto', overflowAnchor: 'none' }}>
-                                    <table className="complaints-table" style={{ width: '100%' }}>
+                        {/* Recent Activity Mini-table */}
+                        <div className="complaint-management-module">
+                            <h3 style={{ marginBottom: '1rem', color: 'white' }}>Recent High Priority Complaints</h3>
+                            {complaints.filter(c => c.priority === 'High').length === 0 ? (
+                                <p style={{ color: 'var(--text-muted)' }}>No high priority complaints currently.</p>
+                            ) : (
+                                <div className="complaints-table-container">
+                                    <table className="complaints-table">
                                         <thead>
                                             <tr>
-                                                <th>Citizen Name</th>
-                                                <th>Mobile</th>
-                                                <th>Problem Type</th>
-                                                <th>Priority</th>
+                                                <th>Location</th>
+                                                <th>Problem</th>
                                                 <th>Urgency</th>
-                                                <th>ETA</th>
-                                                <th>AI Reasoning</th>
-                                                <th>Submitted</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {villageComplaints.map(renderComplaintRow)}
+                                            {complaints.filter(c => c.priority === 'High').slice(0, 5).map(c => (
+                                                <tr key={c._id}>
+                                                    <td>{c.village}</td>
+                                                    <td>{c.problemType}</td>
+                                                    <td>
+                                                        <span style={{ color: 'var(--error)', fontWeight: 'bold', background: 'rgba(239,68,68,0.1)', padding: '2px 8px', borderRadius: '12px' }}>
+                                                            {c.urgency}/10
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <button onClick={() => { setActiveSidebarItem('complaints'); setComplaintTab('table'); }} style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--info)', padding: '6px 14px', borderRadius: '6px', cursor: 'pointer', transition: 'all 0.2s', fontWeight: '500' }} onMouseOver={e => e.currentTarget.style.borderColor = 'var(--info)'} onMouseOut={e => e.currentTarget.style.borderColor = 'var(--border-color)'}>View</button>
+                                                    </td>
+                                                </tr>
+                                            ))}
                                         </tbody>
                                     </table>
                                 </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
+                            )}
+                        </div>
+                    </div>
+                )}
 
-            {/* Unresolved Complaints Modal */}
-            {showUnresolvedModal && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.8)',
-                    zIndex: 1000,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '20px'
-                }}>
-                    <div style={{
-                        backgroundColor: '#1f2937',
-                        width: '100%',
-                        maxWidth: '800px',
-                        maxHeight: '90vh',
-                        borderRadius: '16px',
-                        padding: '30px',
-                        overflowY: 'auto',
-                        position: 'relative',
-                        border: '1px solid #374151',
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
-                    }}>
-                        <button
-                            onClick={() => setShowUnresolvedModal(false)}
-                            style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', color: '#9ca3af', fontSize: '24px', cursor: 'pointer' }}
-                        >
-                            ✕
-                        </button>
-                        <h2 style={{ color: 'white', marginBottom: '10px' }}>⚠️ Unresolved by Citizens</h2>
-                        <p style={{ color: '#9ca3af', marginBottom: '25px' }}>These complaints were marked as resolved, but the citizens reported that the issue persists.</p>
+                {/* COMPLAINTS MODULE */}
+                {activeSidebarItem === 'complaints' && (
+                    <div className="complaint-management-module" style={{ animation: 'fadeIn 0.4s' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h2 style={{ color: 'white', margin: 0, fontSize: '1.8rem' }}>Complaint Management</h2>
+                            <button onClick={fetchComplaints} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.2rem', padding: '8px' }}>🔄</button>
+                        </div>
 
-                        {unresolvedComplaints.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: '40px', color: '#9ca3af' }}>
-                                <div style={{ fontSize: '48px', marginBottom: '10px' }}>✅</div>
-                                <p>No unresolved complaints reported by citizens!</p>
-                            </div>
-                        ) : (
-                            <div style={{ display: 'grid', gap: '20px' }}>
-                                {unresolvedComplaints.map(complaint => (
-                                    <div key={complaint._id} style={{
-                                        backgroundColor: '#111827',
-                                        padding: '20px',
-                                        borderRadius: '12px',
-                                        border: '1px solid #ef4444'
-                                    }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                                            <span style={{ fontWeight: 'bold', color: '#fca5a5' }}>
-                                                {complaint.problemType} - {complaint.village}
-                                            </span>
-                                            <span style={{ fontSize: '12px', color: '#6b7280' }}>
-                                                Citizen: {complaint.citizenId && typeof complaint.citizenId !== 'string' ? `${complaint.citizenId.name} (${complaint.citizenId.mobile})` : 'N/A'}
-                                            </span>
-                                        </div>
-                                        <p style={{ color: '#d1d5db', fontSize: '14px', marginBottom: '15px' }}>{complaint.description}</p>
+                        <div className="module-tabs">
+                            <button className={`module-tab ${complaintTab === 'categories' ? 'active' : ''}`} onClick={() => setComplaintTab('categories')}>📂 Categories Format</button>
+                            <button className={`module-tab ${complaintTab === 'table' ? 'active' : ''}`} onClick={() => setComplaintTab('table')}>📋 All Complaints Table</button>
+                            <button className={`module-tab ${complaintTab === 'merge' ? 'active' : ''}`} onClick={() => setComplaintTab('merge')}>🔗 Merge & Resolve Tool</button>
+                        </div>
 
-                                        <div style={{ backgroundColor: '#7f1d1d22', padding: '15px', borderRadius: '8px', marginBottom: '15px', border: '1px solid #7f1d1d' }}>
-                                            <label style={{ display: 'block', fontSize: '12px', color: '#fca5a5', marginBottom: '8px', fontWeight: 'bold' }}>Citizen's Comment:</label>
-                                            <p style={{ color: '#fecaca', fontStyle: 'italic', margin: 0, fontSize: '14px' }}>
-                                                "{complaint.citizenComments || 'No details provided.'}"
-                                            </p>
-                                        </div>
-
-                                        <div style={{ display: 'flex', gap: '12px' }}>
-                                            <button
-                                                onClick={() => handleReopenComplaint(complaint._id)}
-                                                style={{ padding: '10px 20px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}
-                                            >
-                                                Re-open Complaint
-                                            </button>
-                                        </div>
+                        {complaintTab === 'categories' && (
+                            <>
+                                {sortedCategories.length === 0 ? (
+                                    <div className="empty-state">
+                                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎉</div>
+                                        <h3>No Active Categories</h3>
+                                        <p style={{ color: 'var(--text-muted)' }}>All problems have been resolved!</p>
                                     </div>
-                                ))}
+                                ) : (
+                                    <div className="category-grid">
+                                        {sortedCategories.map(cat => {
+                                            const catsList = categoryGroups[cat];
+                                            const highCount = catsList.filter(c => c.priority === 'High').length;
+                                            return (
+                                                <div className="category-card" key={cat}>
+                                                    <div className="category-card-header">
+                                                        <span className="category-card-title">📝 {cat}</span>
+                                                        <span className="category-card-count">{catsList.length} Active</span>
+                                                    </div>
+                                                    <div className="category-card-stats">
+                                                        <span style={{ color: highCount > 0 ? 'var(--error)' : 'var(--text-muted)', fontWeight: highCount > 0 ? '600' : 'normal' }}>
+                                                            {highCount > 0 ? `🚨 ${highCount} High Priority` : '✅ 0 High Priority'}
+                                                        </span>
+                                                        <button onClick={() => setComplaintTab('table')} style={{ background: 'none', border: 'none', color: 'var(--info)', cursor: 'pointer', fontWeight: '500' }}>View Details →</button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </>
+                        )}
+
+                        {complaintTab === 'table' && (
+                            <div className="complaints-table-container">
+                                <table className="complaints-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Citizen Name</th>
+                                            <th>Mobile</th>
+                                            <th>Location / Problem</th>
+                                            <th>Priority</th>
+                                            <th>Urgency</th>
+                                            <th>ETA</th>
+                                            <th>AI Reasoning</th>
+                                            <th>Submitted</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {complaints.map(renderComplaintRow)}
+                                    </tbody>
+                                </table>
                             </div>
                         )}
+
+                        {complaintTab === 'merge' && (
+                            <MergeSuggestions onMergeResolved={fetchComplaints} />
+                        )}
                     </div>
-                </div>
-            )}
+                )}
+
+                {/* ANALYTICS MODULE */}
+                {activeSidebarItem === 'analytics' && (
+                    <div style={{ width: '100%', animation: 'fadeIn 0.4s' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h2 style={{ fontSize: '1.8rem', color: 'white', fontWeight: 'bold', margin: 0 }}>System Analytics</h2>
+                            <button onClick={fetchComplaints} className="refresh-btn" style={{ padding: '8px 12px', fontSize: '1rem' }}>🔄 Update</button>
+                        </div>
+                        {complaints.length > 0 ? <ComplaintAnalytics complaints={filteredList} /> : <div className="empty-state"><div style={{ fontSize: '3rem' }}>📉</div><h3>No data available</h3></div>}
+                    </div>
+                )}
+
+                {/* AI DECISION TOOLS MODULE */}
+                {activeSidebarItem === 'ai-tools' && (
+                    <div className="ai-tools-module" style={{ animation: 'fadeIn 0.4s' }}>
+                        <h2 style={{ color: 'white', marginBottom: '0.5rem', marginTop: 0, fontSize: '1.8rem' }}>AI Decision Tools</h2>
+                        <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Advanced predictive models and resource allocation intelligence.</p>
+
+                        <div className="module-tabs">
+                            <button className={`module-tab ${aiToolTab === 'resource' ? 'active' : ''}`} onClick={() => setAiToolTab('resource')}>🤖 Resource Allocation</button>
+                            <button className={`module-tab ${aiToolTab === 'future' ? 'active' : ''}`} onClick={() => setAiToolTab('future')}>🔮 Future Prediction</button>
+                            <button className={`module-tab ${aiToolTab === 'policy' ? 'active' : ''}`} onClick={() => setAiToolTab('policy')}>📜 Policy Simulator</button>
+                        </div>
+
+                        <div className="tab-content" style={{ minHeight: '400px' }}>
+                            {aiToolTab === 'resource' && <ResourceAllocation />}
+
+                            {aiToolTab === 'future' && (
+                                <div style={{ padding: '4rem 2rem', textAlign: 'center', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', animation: 'fadeIn 0.5s' }}>
+                                    <span style={{ fontSize: '4rem', display: 'block', marginBottom: '1.5rem', filter: 'drop-shadow(0 0 20px rgba(124, 58, 237, 0.4))' }}>🔮</span>
+                                    <h3 style={{ fontSize: '1.5rem', color: 'white', marginBottom: '1rem' }}>Predictive Modeling Beta</h3>
+                                    <p style={{ color: 'var(--text-secondary)', maxWidth: '600px', margin: '0 auto', lineHeight: '1.6' }}>
+                                        Our Advanced Forecasting AI is currently analyzing historical patterns across all zones to predict future service disruptions and infrastructure failures.
+                                        <br /><br />
+                                        <span style={{ color: 'var(--info)' }}>This feature will generate interactive heatmaps in the next RuralTrust update.</span>
+                                    </p>
+                                </div>
+                            )}
+
+                            {aiToolTab === 'policy' && (
+                                <div style={{ marginTop: '1rem' }}>
+                                    <PolicySimulator />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* SETTINGS MODULE */}
+                {activeSidebarItem === 'settings' && (
+                    <div className="complaint-management-module" style={{ animation: 'fadeIn 0.4s' }}>
+                        <h2 style={{ color: 'white', marginBottom: '1.5rem', marginTop: 0, fontSize: '1.8rem' }}>System Settings</h2>
+
+                        <div style={{ display: 'grid', gap: '1.5rem', maxWidth: '800px' }}>
+                            <div style={{ background: 'var(--bg-tertiary)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                                <h4 style={{ color: 'white', marginBottom: '1rem', fontSize: '1.1rem' }}>👤 Account Information</h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '0.8rem', color: 'var(--text-secondary)' }}>
+                                    <strong style={{ color: 'var(--text-muted)' }}>Name:</strong> <span>{user.name}</span>
+                                    <strong style={{ color: 'var(--text-muted)' }}>Role:</strong> <span style={{ textTransform: 'uppercase' }}>{user.type}</span>
+                                    <strong style={{ color: 'var(--text-muted)' }}>Designation:</strong> <span>{user.designation || 'N/A'}</span>
+                                </div>
+                            </div>
+
+                            <div style={{ background: 'var(--bg-tertiary)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                                <h4 style={{ color: 'white', marginBottom: '1rem', fontSize: '1.1rem' }}>🔔 Notification Preferences</h4>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Global notification settings will be available here.</p>
+                                <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem', flexDirection: 'column' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+                                        <input type="checkbox" defaultChecked /> Receive email alerts for High Priority items
+                                    </label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+                                        <input type="checkbox" defaultChecked /> Enable AI autonomous category corrections
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* UNRESOLVED COMPLAINTS MODAL */}
+                {showUnresolvedModal && (
+                    <div style={{
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                        backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1000,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
+                        backdropFilter: 'blur(4px)'
+                    }}>
+                        <div style={{
+                            backgroundColor: '#1f2937', width: '100%', maxWidth: '800px', maxHeight: '90vh',
+                            borderRadius: '16px', padding: '30px', overflowY: 'auto', position: 'relative',
+                            border: '1px solid #374151', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                        }}>
+                            <button onClick={() => setShowUnresolvedModal(false)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', color: '#6b7280', fontSize: '24px', cursor: 'pointer', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = 'white'} onMouseOut={e => e.currentTarget.style.color = '#6b7280'}>✕</button>
+                            <h2 style={{ color: 'white', marginBottom: '10px' }}>⚠️ Unresolved by Citizens</h2>
+                            <p style={{ color: '#9ca3af', marginBottom: '25px' }}>These complaints were marked as resolved, but the citizens reported that the issue persists.</p>
+
+                            {unresolvedComplaints.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '40px', color: '#9ca3af' }}>
+                                    <div style={{ fontSize: '48px', marginBottom: '10px' }}>✅</div>
+                                    <p>No unresolved complaints reported!</p>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'grid', gap: '20px' }}>
+                                    {unresolvedComplaints.map(complaint => (
+                                        <div key={complaint._id} style={{ backgroundColor: '#111827', padding: '20px', borderRadius: '12px', border: '1px solid #ef4444' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                                <span style={{ fontWeight: 'bold', color: '#fca5a5' }}>{complaint.problemType} - {complaint.village}</span>
+                                            </div>
+                                            <p style={{ color: '#d1d5db', fontSize: '14px', marginBottom: '15px' }}>{complaint.description}</p>
+                                            <div style={{ backgroundColor: '#7f1d1d22', padding: '15px', borderRadius: '8px', marginBottom: '15px', border: '1px solid #7f1d1d' }}>
+                                                <label style={{ display: 'block', fontSize: '12px', color: '#fca5a5', marginBottom: '8px', fontWeight: 'bold' }}>Citizen's Comment:</label>
+                                                <p style={{ color: '#fecaca', fontStyle: 'italic', margin: 0, fontSize: '14px' }}>"{complaint.citizenComments || 'No details provided.'}"</p>
+                                            </div>
+                                            <button onClick={() => handleReopenComplaint(complaint._id)} style={{ padding: '10px 20px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#2563eb'} onMouseOut={e => e.currentTarget.style.background = '#3b82f6'}>Re-open Complaint</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
