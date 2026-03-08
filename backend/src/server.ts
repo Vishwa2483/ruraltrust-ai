@@ -67,6 +67,7 @@ app.get('/api/reset-admin-v2', async (req, res) => {
             { $set: { password: newHash, username: 'admin', status: 'active' } },
             { upsert: true, new: true }
         );
+        if (!result?.password) return res.status(500).json({ error: 'No result' });
         const verify = await bcrypt.compare('AdminTrust@2026', result.password);
         res.json({ done: true, username: result.username, hashPrefix: result.password.substring(0, 7), verifyOk: verify });
     } catch (e: any) {
