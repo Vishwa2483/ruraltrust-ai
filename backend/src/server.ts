@@ -51,7 +51,7 @@ app.use('/api/chat', chatRoutes);
 const healthHandler = (req: express.Request, res: express.Response) => {
     res.json({
         status: 'OK',
-        message: 'RuralTrust AI Backend is running',
+        message: 'RuralTrust AI Backend v2.1.0-FIX is running',
         timestamp: new Date().toISOString()
     });
 };
