@@ -96,6 +96,20 @@ app.get('/api/fix-users', async (req, res) => {
     } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
+// Debug: check one complaint's citizenId linkage
+app.get('/api/debug-populate', async (req, res) => {
+    try {
+        const Complaint = require('./models/Complaint').default;
+        const sample = await Complaint.findOne({ citizenId: { $exists: true } }).populate('citizenId', 'name mobile village');
+        res.json({
+            citizenIdType: sample ? typeof sample.citizenId : 'no doc',
+            citizenId: sample?.citizenId,
+            village: sample?.village,
+            problemType: sample?.problemType
+        });
+    } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // Root endpoint
 app.get('/', (req, res) => {
     res.json({
