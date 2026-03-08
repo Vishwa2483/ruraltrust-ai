@@ -19,8 +19,9 @@ const GovernmentDashboard: React.FC = () => {
     const [showUnresolvedModal, setShowUnresolvedModal] = useState(false);
     const [unresolvedComplaints, setUnresolvedComplaints] = useState<Complaint[]>([]);
 
-    // Navigation state
+    // Navigation and Accordion state
     const [activeSidebarItem, setActiveSidebarItem] = useState('overview');
+    const [expandedVillages, setExpandedVillages] = useState<Record<string, boolean>>({});
 
     const fetchComplaints = async () => {
         try {
@@ -539,6 +540,11 @@ const GovernmentDashboard: React.FC = () => {
                                     if (villageComplaints.length === 0) return null;
 
                                     const highCount = villageComplaints.filter(c => c.priority === 'High').length;
+                                    const isExpanded = expandedVillages[village] !== false; // Active by default
+                                    const toggleVillage = () => {
+                                        setExpandedVillages(prev => ({ ...prev, [village]: !isExpanded }));
+                                    };
+
                                     return (
                                         <div key={village} style={{
                                             width: '100%',
@@ -546,20 +552,26 @@ const GovernmentDashboard: React.FC = () => {
                                             overflow: 'hidden',
                                             border: '1px solid #374151',
                                             boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
-                                            background: '#111827'
+                                            background: '#111827',
+                                            transition: 'all 0.3s ease'
                                         }}>
                                             {/* Village header */}
-                                            <div style={{
-                                                width: '100%',
-                                                padding: '18px 28px',
-                                                background: 'linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%)',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                gap: '16px',
-                                                boxSizing: 'border-box',
-                                                borderBottom: '2px solid #3b82f6'
-                                            }}>
+                                            <div
+                                                onClick={toggleVillage}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '18px 28px',
+                                                    background: 'linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%)',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '16px',
+                                                    boxSizing: 'border-box',
+                                                    borderBottom: isExpanded ? '2px solid #3b82f6' : 'none',
+                                                    cursor: 'pointer',
+                                                    userSelect: 'none',
+                                                    position: 'relative'
+                                                }}>
                                                 <span style={{ fontSize: '26px' }}>📍</span>
                                                 <div style={{ textAlign: 'center' }}>
                                                     <div style={{
@@ -590,29 +602,41 @@ const GovernmentDashboard: React.FC = () => {
                                                         )}
                                                     </div>
                                                 </div>
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    right: '25px',
+                                                    fontSize: '20px',
+                                                    transition: 'transform 0.3s',
+                                                    transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                                                    color: '#9ca3af'
+                                                }}>
+                                                    ▼
+                                                </div>
                                             </div>
 
                                             {/* Complaints table for this village */}
-                                            <div className="complaints-table-container" style={{ overflowX: 'auto', overflowAnchor: 'none', border: 'none', borderRadius: '0' }}>
-                                                <table className="complaints-table" style={{ width: '100%' }}>
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Citizen Name</th>
-                                                            <th>Mobile</th>
-                                                            <th>Location / Problem</th>
-                                                            <th>Priority</th>
-                                                            <th>Urgency</th>
-                                                            <th>ETA</th>
-                                                            <th>AI Reasoning</th>
-                                                            <th>Submitted</th>
-                                                            <th>Action</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {villageComplaints.map(renderComplaintRow)}
-                                                    </tbody>
-                                                </table>
-                                            </div>
+                                            {isExpanded && (
+                                                <div className="complaints-table-container" style={{ overflowX: 'auto', overflowAnchor: 'none', border: 'none', borderRadius: '0', animation: 'fadeIn 0.3s' }}>
+                                                    <table className="complaints-table" style={{ width: '100%' }}>
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Citizen Name</th>
+                                                                <th>Mobile</th>
+                                                                <th>Location / Problem</th>
+                                                                <th>Priority</th>
+                                                                <th>Urgency</th>
+                                                                <th>ETA</th>
+                                                                <th>AI Reasoning</th>
+                                                                <th>Submitted</th>
+                                                                <th>Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {villageComplaints.map(renderComplaintRow)}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })}
