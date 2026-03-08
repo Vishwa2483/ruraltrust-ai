@@ -58,56 +58,84 @@ const healthHandler = (req: express.Request, res: express.Response) => {
 app.get('/health', healthHandler);
 app.get('/api/health', healthHandler);
 
-// One-time fix: convert user string _ids to ObjectId, re-link complaint citizenIds
-app.get('/api/fix-users', async (req, res) => {
+// Final fix: ensure all IDs are ObjectIds and linkages are correct
+app.get('/api/fix-all-data', async (req, res) => {
     try {
         const db = mongoose.connection.db!;
-        // Step 1: Fix users
-        const users = await db.collection('users').find({}).toArray();
+        const User = require('./models/User').default;
+        const Complaint = require('./models/Complaint').default;
+
+        // 1. Fix Users _id
+        const userDocs = await db.collection('users').find({}).toArray();
         const idMap: Record<string, mongoose.Types.ObjectId> = {};
-        let usersFixed = 0;
-        for (const u of users) {
+        let usersConverted = 0;
+
+        for (const u of userDocs) {
+            const currentIdStr = u._id.toString();
             if (typeof u._id === 'string') {
-                const oldId = u._id as string;
-                const newId = new mongoose.Types.ObjectId(oldId);
-                idMap[oldId] = newId;
+                const newId = new mongoose.Types.ObjectId(u._id);
+                idMap[currentIdStr] = newId;
                 const newDoc = { ...u, _id: newId };
-                await db.collection('users').deleteOne({ _id: oldId as any });
-                await db.collection('users').insertOne(newDoc);
-                usersFixed++;
+                await db.collection('users').deleteOne({ _id: u._id as any });
+                try { await db.collection('users').insertOne(newDoc); } catch (e) { /* ignore duplicates */ }
+                usersConverted++;
             } else {
-                idMap[u._id.toString()] = u._id;
+                idMap[currentIdStr] = u._id;
             }
         }
-        // Step 2: Re-link citizenId in complaints
-        const complaints = await db.collection('complaints').find({}).toArray();
+
+        // 2. Fix Complaints _id and citizenId
+        const complaintDocs = await db.collection('complaints').find({}).toArray();
         let complaintsFixed = 0;
-        for (const c of complaints) {
-            const cid = c.citizenId;
-            if (!cid) continue;
-            const cidStr = typeof cid === 'string' ? cid : cid.toString();
-            const newCid = idMap[cidStr];
-            if (newCid && typeof cid !== 'object') {
-                await db.collection('complaints').updateOne({ _id: c._id }, { $set: { citizenId: newCid } });
+        let citizenRefsFixed = 0;
+
+        for (const c of complaintDocs) {
+            let needsUpdate = false;
+            let currentDoc = { ...c };
+
+            // Fix complaint _id if it's a string
+            if (typeof c._id === 'string') {
+                const newId = new mongoose.Types.ObjectId(c._id);
+                currentDoc._id = newId;
+                await db.collection('complaints').deleteOne({ _id: c._id as any });
+                needsUpdate = true;
+            }
+
+            // Fix citizenId ref
+            if (currentDoc.citizenId) {
+                const cidStr = currentDoc.citizenId.toString();
+                const targetOid = idMap[cidStr];
+
+                // If it's a string or if it's an object that doesn't strictly match the map
+                if (typeof currentDoc.citizenId === 'string' || (targetOid && currentDoc.citizenId.toString() !== targetOid.toString())) {
+                    currentDoc.citizenId = targetOid || new mongoose.Types.ObjectId(cidStr);
+                    needsUpdate = true;
+                    citizenRefsFixed++;
+                }
+            }
+
+            if (needsUpdate) {
+                try { await db.collection('complaints').insertOne(currentDoc); } catch (e) {
+                    // If insert fails (maybe already exists), try update
+                    await db.collection('complaints').updateOne({ _id: currentDoc._id }, { $set: { citizenId: currentDoc.citizenId } });
+                }
                 complaintsFixed++;
             }
         }
-        res.json({ done: true, usersFixed, complaintsFixed });
-    } catch (e: any) { res.status(500).json({ error: e.message }); }
-});
 
-// Debug: check one complaint's citizenId linkage
-app.get('/api/debug-populate', async (req, res) => {
-    try {
-        const Complaint = require('./models/Complaint').default;
-        const sample = await Complaint.findOne({ citizenId: { $exists: true } }).populate('citizenId', 'name mobile village');
+        // 3. Verify one
+        const sample = await Complaint.findOne({ citizenId: { $exists: true } }).populate('citizenId');
+
         res.json({
-            citizenIdType: sample ? typeof sample.citizenId : 'no doc',
-            citizenId: sample?.citizenId,
-            village: sample?.village,
-            problemType: sample?.problemType
+            status: 'success',
+            usersConverted,
+            complaintsFixed,
+            citizenRefsFixed,
+            samplePopulated: sample && sample.citizenId ? sample.citizenId.name : 'FAIL'
         });
-    } catch (e: any) { res.status(500).json({ error: e.message }); }
+    } catch (e: any) {
+        res.status(500).json({ error: e.message, stack: e.stack });
+    }
 });
 
 // Root endpoint
