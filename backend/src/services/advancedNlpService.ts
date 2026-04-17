@@ -555,9 +555,6 @@ export function analyzeComplaintAdvanced(
     const reasoning = `
 AI Analysis (Confidence: ${(confidence * 100).toFixed(1)}%):
 - 🏷️ Priority driven by category: "${primaryProblemType}" → ${priority} (urgency band: ${urgencyMin}–${urgencyMax})
-${problemTypes.length > 1 ? `- 🔥 Multi-Label Classification: ${categoryList}` : ''}
-- 🎯 XAI Priority Score: ${(priorityScore * 100).toFixed(1)}%
-- Urgency: ${urgency}/10
 - Sentiment: ${sentiment.magnitude} (Score: ${sentiment.score.toFixed(2)})
 - Detected Entities: ${Object.values(entities).flat().length > 0 ? Object.values(entities).flat().join(', ') : 'None'}
 - Risk Level: ${emotionalRisk}
