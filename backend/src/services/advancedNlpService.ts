@@ -94,9 +94,9 @@ const GOVERNANCE_ENTITIES = {
         'area', 'street', 'lane', 'market', 'gram', 'taluk'
     ],
     riskFactors: [
-        'accident', 'death', 'injury', 'disease', 'epidemic', 'contamination',
+        'accident', 'death', 'died', 'die', 'dead', 'fatal', 'injury', 'disease', 'epidemic', 'contamination',
         'fire', 'flood', 'landslide', 'collapse', 'damage', 'unsafe',
-        'emergency', 'critical', 'danger', 'hazard', 'risk'
+        'emergency', 'critical', 'danger', 'hazard', 'risk', 'toxic', 'gas', 'poison', 'gases'
     ]
 };
 
@@ -185,7 +185,7 @@ function tokenizeAndAnalyze(text: string): { tokens: string[]; tfidfScores: Map<
  * Multi-Label Classification using Binary Relevance
  * Classifies complaint into multiple categories simultaneously
  */
-function classifyMultiLabel(text: string): Array<{ category: string; confidence: number }> {
+function classifyMultiLabel(text: string, problemType: string): Array<{ category: string; confidence: number }> {
     const { tokens } = tokenizeAndAnalyze(text);
     const lowerText = text.toLowerCase();
     const results: Array<{ category: string; confidence: number }> = [];
@@ -264,22 +264,49 @@ function classifyMultiLabel(text: string): Array<{ category: string; confidence:
         }
     }
 
-    // If no categories matched, return the best one anyway (with lower confidence)
+    // If no categories matched, return the expected problemType instead of blindly guessing Water Supply
     if (results.length === 0) {
-        const allScores = Object.entries(PROBLEM_CLASSIFIERS).map(([category]) => {
-            const keywordMatches = tokens.filter(t =>
-                PROBLEM_CLASSIFIERS[category as keyof typeof PROBLEM_CLASSIFIERS].keywords.some(kw => {
-                    const stemmer = natural.PorterStemmer;
-                    return stemmer.stem(kw) === t;
-                })
-            ).length;
-            return { category, confidence: Math.min(0.5, keywordMatches * 0.1) };
-        });
-        allScores.sort((a, b) => b.confidence - a.confidence);
-        results.push(allScores[0]);
+        results.push({ category: problemType || 'Other', confidence: 0.4 });
+    } else {
+        // Ensure we never return extremely low 0% confidences that look buggy
+        const filtered = results.filter(r => r.confidence >= 0.1);
+        if (filtered.length > 0) {
+            results.length = 0;
+            results.push(...filtered);
+        } else {
+            results.push({ category: problemType || 'Other', confidence: 0.4 });
+        }
     }
 
     return results;
+}
+
+/**
+ * Generate an AI suggestion on how to resolve the problem based on factors
+ */
+function generateSuggestedResolution(problemType: string, urgency: number, entities: any): string {
+    if (entities.riskFactors.length > 0 || urgency >= 8) {
+        return `IMMEDIATE ACTION REQUIRED: Dispatch emergency response/hazmat team. Address risk factors (${entities.riskFactors.join(', ')}) immediately to prevent further damage or loss of life.`;
+    }
+    
+    switch(problemType) {
+        case 'Healthcare':
+            return 'Send medical rapid response unit to assess the situation. Ensure emergency medicine and staff are immediately available.';
+        case 'Water Supply':
+            return 'Dispatch water tankers immediately. Send infrastructure repair team to inspect pipelines and restore permanent supply.';
+        case 'Electricity':
+            return 'Send EB (Electricity Board) emergency technicians to isolate the fault and restore power safely.';
+        case 'Road Damage':
+            return 'Deploy engineering team to barricade unsafe paths and begin structural repairs immediately.';
+        case 'Sanitation':
+            return 'Dispatch sanitary workers and sewage clearing trucks to clear the blockages and sanitize the area.';
+        case 'Waste Management':
+            return 'Deploy waste collection vehicles and manpower to clear piled up garbage and disinfect the hazard zone.';
+        case 'Street Lights':
+            return 'Send electrical maintenance technicians to repair/replace faulty street light installations.';
+        default:
+            return 'Deploy relevant local authorities to assess and resolve the reported issue urgently.';
+    }
 }
 
 /**
@@ -419,8 +446,9 @@ export function analyzeComplaintAdvanced(
     problemType: string
 ): AdvancedAnalysisResult {
     // Step 1: Multi-Label Classification 🔥
-    const problemTypes = classifyMultiLabel(description);
-    const primaryProblemType = problemTypes[0].category; // Highest confidence category
+    const problemTypes = classifyMultiLabel(description, problemType);
+    // Respect user's selected category first! Only fallback if missing/Other.
+    const primaryProblemType = problemType && problemType !== 'Other' ? problemType : problemTypes[0].category;
 
     // Step 2: Tokenize and TF-IDF analysis
     const { tokens } = tokenizeAndAnalyze(description);
@@ -522,17 +550,19 @@ export function analyzeComplaintAdvanced(
     }
 
     // Step 13: Generate reasoning 🔥🎯
+    const resolution = generateSuggestedResolution(primaryProblemType, urgency, entities);
     const categoryList = problemTypes.map(pt => `${pt.category} (${(pt.confidence * 100).toFixed(0)}%)`).join(', ');
     const reasoning = `
 AI Analysis (Confidence: ${(confidence * 100).toFixed(1)}%):
 - 🏷️ Priority driven by category: "${primaryProblemType}" → ${priority} (urgency band: ${urgencyMin}–${urgencyMax})
-- 🔥 Multi-Label Classification: ${categoryList}
+${problemTypes.length > 1 ? `- 🔥 Multi-Label Classification: ${categoryList}` : ''}
 - 🎯 XAI Priority Score: ${(priorityScore * 100).toFixed(1)}%
 - Urgency: ${urgency}/10
 - Sentiment: ${sentiment.magnitude} (Score: ${sentiment.score.toFixed(2)})
 - Detected Entities: ${Object.values(entities).flat().length > 0 ? Object.values(entities).flat().join(', ') : 'None'}
 - Risk Level: ${emotionalRisk}
 ${suggestedCategory && suggestedCategory !== problemType ? `- Suggested Category: ${suggestedCategory}` : ''}
+- 💡 Suggested Resolution: ${resolution}
 - Indicators: ${urgencyIndicators.join('; ')}
 ${activeLearningSuggestion ? '- ⚠️ Flagged for human review (uncertain prediction)' : ''}
     `;
