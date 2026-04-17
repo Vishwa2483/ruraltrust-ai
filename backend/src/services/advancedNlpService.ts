@@ -103,7 +103,7 @@ const GOVERNANCE_ENTITIES = {
 // Problem type classifier with semantic similarity
 const PROBLEM_CLASSIFIERS = {
     'Water Supply': {
-        keywords: ['water', 'supply', 'pipeline', 'tap', 'bore', 'well', 'tanker', 'shortage', 'contamination'],
+        keywords: ['water', 'supply', 'water supply', 'pipeline', 'tap', 'bore', 'well', 'tanker', 'shortage', 'contamination'],
         urgencyKeywords: ['no water', 'contaminated', 'dirty', 'chemical', 'bacterial', 'shortage'],
         baseUrgency: 6
     },
@@ -113,7 +113,7 @@ const PROBLEM_CLASSIFIERS = {
         baseUrgency: 7
     },
     'Road Damage': {
-        keywords: ['road', 'street', 'pothole', 'crack', 'bridge', 'highway', 'path', 'surface'],
+        keywords: ['road', 'street', 'road damage', 'pothole', 'crack', 'bridge', 'highway', 'path', 'surface'],
         urgencyKeywords: ['accident', 'pothole', 'unsafe', 'collapse', 'broken'],
         baseUrgency: 5
     },
@@ -123,17 +123,17 @@ const PROBLEM_CLASSIFIERS = {
         baseUrgency: 6
     },
     'Healthcare': {
-        keywords: ['hospital', 'clinic', 'medicine', 'doctor', 'patient', 'ambulance', 'health'],
+        keywords: ['healthcare', 'health care', 'hospital', 'clinic', 'medicine', 'doctor', 'patient', 'ambulance', 'health'],
         urgencyKeywords: ['emergency', 'patient', 'critical', 'medicine', 'doctor absent'],
         baseUrgency: 8
     },
     'Street Lights': {
-        keywords: ['street light', 'streetlight', 'lamp post', 'street lamp', 'light post', 'public lighting', 'darkness', 'illumination', 'LED', 'bulb', 'lamp'],
+        keywords: ['street lights', 'street light', 'streetlight', 'lamp post', 'street lamp', 'light post', 'public lighting', 'darkness', 'illumination', 'LED', 'bulb', 'lamp'],
         urgencyKeywords: ['dark', 'crime', 'unsafe', 'not working', 'broken', 'no light'],
         baseUrgency: 4
     },
     'Waste Management': {
-        keywords: ['garbage', 'trash', 'rubbish', 'waste collection', 'dustbin', 'dump', 'litter', 'refuse', 'waste'],
+        keywords: ['waste management', 'garbage', 'trash', 'rubbish', 'waste collection', 'dustbin', 'dump', 'litter', 'refuse', 'waste'],
         urgencyKeywords: ['overflow', 'smell', 'disease', 'piled up', 'scattered', 'unhygienic', 'rotting'],
         baseUrgency: 5
     }

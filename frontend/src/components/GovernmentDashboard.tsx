@@ -7,6 +7,16 @@ import PolicySimulator from './PolicySimulator';
 import MergeSuggestions from './MergeSuggestions';
 import './GovernmentDashboard.css';
 
+const CATEGORY_ICONS: Record<string, string> = {
+    'Water Supply': '💧',
+    'Sanitation': '🚽',
+    'Road Damage': '🛣️',
+    'Electricity': '⚡',
+    'Healthcare': '🏥',
+    'Street Lights': '🔦',
+    'Waste Management': '♻️',
+};
+
 const GovernmentDashboard: React.FC = () => {
     const [user, setUser] = useState<GovernmentUser | null>(getUser() as GovernmentUser);
     const [complaints, setComplaints] = useState<Complaint[]>([]);
@@ -198,24 +208,40 @@ const GovernmentDashboard: React.FC = () => {
                         ? complaint.citizenId.mobile : 'N/A'}
                 </td>
                 <td style={{ maxWidth: '220px' }}>
-                    {complaint.problemTypes && complaint.problemTypes.length > 0 ? (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                            {complaint.problemTypes.map((pt, idx) => (
-                                <span key={idx} style={{
-                                    display: 'inline-flex', alignItems: 'center', gap: '4px',
-                                    padding: '4px 8px', borderRadius: '4px',
-                                    backgroundColor: idx === 0 ? '#374151' : '#1f2937',
-                                    border: idx === 0 ? '1px solid #60a5fa' : '1px solid #4b5563',
-                                    fontSize: '11px', fontWeight: idx === 0 ? '600' : '500', color: '#f3f4f6'
-                                }}>
-                                    {idx === 0 && '🔥'} {pt.category}
-                                    <span style={{ fontSize: '10px', color: '#9ca3af', marginLeft: '2px' }}>
-                                        {(pt.confidence * 100).toFixed(0)}%
-                                    </span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                        <span style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '4px',
+                            padding: '4px 8px', borderRadius: '4px',
+                            backgroundColor: '#374151',
+                            border: '1px solid #60a5fa',
+                            fontSize: '11px', fontWeight: '600', color: '#f3f4f6'
+                        }}>
+                            {CATEGORY_ICONS[complaint.problemType] || '📋'} {complaint.problemType}
+                            {complaint.problemTypes && complaint.problemTypes.length > 1 && (
+                                <span style={{ fontSize: '10px', color: '#9ca3af', marginLeft: '2px' }}>
+                                    {(() => {
+                                        const match = complaint.problemTypes.find(p => p.category === complaint.problemType);
+                                        return match ? `${(match.confidence * 100).toFixed(0)}%` : (complaint.confidence ? `${(complaint.confidence * 100).toFixed(0)}%` : '');
+                                    })()}
                                 </span>
-                            ))}
-                        </div>
-                    ) : complaint.problemType}
+                            )}
+                        </span>
+                        
+                        {complaint.problemTypes && complaint.problemTypes.length > 1 && complaint.problemTypes.filter(pt => pt.category !== complaint.problemType).map((pt, idx) => (
+                            <span key={idx} style={{
+                                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                padding: '4px 8px', borderRadius: '4px',
+                                backgroundColor: '#1f2937',
+                                border: '1px solid #4b5563',
+                                fontSize: '11px', fontWeight: '500', color: '#f3f4f6'
+                            }}>
+                                {CATEGORY_ICONS[pt.category] || '📋'} {pt.category}
+                                <span style={{ fontSize: '10px', color: '#9ca3af', marginLeft: '2px' }}>
+                                    {(pt.confidence * 100).toFixed(0)}%
+                                </span>
+                            </span>
+                        ))}
+                    </div>
                     {complaint.autoCorrected && (
                         <div title={complaint.correctionReason || 'AI corrected based on image analysis'} style={{
                             marginTop: '6px', backgroundColor: '#3b82f6', color: 'white',
