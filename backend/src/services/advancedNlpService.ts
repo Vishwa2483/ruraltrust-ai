@@ -149,11 +149,11 @@ const PROBLEM_CLASSIFIERS = {
 const CATEGORY_PRIORITY_MAP: Record<string, 'High' | 'Medium' | 'Low'> = {
     'Healthcare': 'High',
     'Electricity': 'High',
-    'Water Supply': 'Medium',   // Boosted → High if riskFactors detected
+    'Water Supply': 'Medium',
     'Sanitation': 'Medium',
     'Road Damage': 'Medium',
-    'Waste Management': 'Low',
-    'Street Lights': 'Low',
+    'Waste Management': 'Medium',  // Boosted → High if riskFactors detected
+    'Street Lights': 'Medium',     // Boosted → High if accidents detected
 };
 
 /**
@@ -514,8 +514,8 @@ export function analyzeComplaintAdvanced(
     let priority: 'High' | 'Medium' | 'Low' =
         CATEGORY_PRIORITY_MAP[primaryProblemType] ?? 'Medium';
 
-    // Runtime boost: promote Medium → High if risk factors are detected
-    if (priority === 'Medium' && entities.riskFactors.length > 0) {
+    // Runtime boost: promote ANY category → High if SERIOUS risk factors are detected (accidents, deaths, toxic, fire, etc.)
+    if (entities.riskFactors.length > 0) {
         priority = 'High';
     }
 

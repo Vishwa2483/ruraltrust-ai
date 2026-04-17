@@ -34,22 +34,21 @@ async function runSimulator() {
         console.log(`👤 Found ${citizens.length} citizens in the database.`);
 
         // Auto-generate citizens if none exist to satisfy "use everyone"
-        if (citizens.length === 0) {
-            console.log('⚠️ No citizens found! Automatically creating 10 dummy citizen accounts first...');
-            const dummyCitizens = [];
-            for (let i = 0; i < 10; i++) {
-                dummyCitizens.push({
-                    type: 'citizen',
-                    name: `Simulated Citizen ${i + 1}`,
-                    mobile: `+91980000000${i}`,
-                    village: getRandom(VILLAGES),
-                    status: 'active'
-                });
-            }
-            await User.insertMany(dummyCitizens);
-            citizens = await User.find({ type: 'citizen' });
-            console.log(`✅ Successfully created ${citizens.length} dummy citizens.`);
+        console.log('⚠️ Automatically creating 100 dummy citizen accounts first to ensure 100 unique IDs...');
+        await User.deleteMany({ name: /^Simulated Citizen/ }); // Clear old simulated citizens to stay clean
+        const dummyCitizens = [];
+        for (let i = 0; i < 100; i++) {
+            dummyCitizens.push({
+                type: 'citizen',
+                name: `Simulated Citizen ${i + 1}`,
+                mobile: `+919800000${i.toString().padStart(3, '0')}`,
+                village: getRandom(VILLAGES),
+                status: 'active'
+            });
         }
+        await User.insertMany(dummyCitizens);
+        citizens = await User.find({ name: /^Simulated Citizen/ });
+        console.log(`✅ Successfully created ${citizens.length} dummy citizens.`);
 
         let totalSuccess = 0;
         let totalFailed = 0;
@@ -60,9 +59,8 @@ async function runSimulator() {
             // Generate valid JWT using backend's internal auth service
             const token = generateJWT(citizen);
 
-            // Generate exactly 20 complaints per citizen as requested
-            const numComplaints = 20;
-            console.log(`\n👨‍💼 Simulating ${numComplaints} complaints for ${citizen.name || citizen.mobile}...`);
+            // Generate exactly 1 complaint per citizen
+            const numComplaints = 1;
 
             for (let i = 0; i < numComplaints; i++) {
                 const problemType = getRandom(PROBLEM_TYPES);
